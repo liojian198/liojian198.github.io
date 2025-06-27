@@ -2,7 +2,7 @@
 title: "细粒度权限管理"
 collection: teaching
 type: "技术"
-excerpt: "<br>2024-06-27整理架构的资料 <br/><img src='/images/old/software.jpg'>"
+excerpt: "细粒度权限管理"
 permalink: /teaching/author
 date: 2025-06-28
 ---
