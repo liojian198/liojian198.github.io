@@ -25,7 +25,7 @@ author:
   avatar           : "profile.png"
   name             : "基本信息"
   pronouns         : # example: "she/her"  
-  bio              : "Short biography for the left-hand sidebar"
+  bio              : #"Short biography for the left-hand sidebar"
   location         : "中国"
  # employer         : "Red Brick University"
  # uri              : # URL
