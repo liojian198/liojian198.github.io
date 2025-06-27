@@ -7,13 +7,12 @@ permalink: /openSourceManagement/author
 date: 2025-06-28
 ---
 
-This is a description of a teaching experience. You can use markdown like any other post.
 
-Heading 1
+开源项目的描述表格
 ======
 
-Heading 2
-======
-
-Heading 3
-======
+| 项目名 | 地址 | 描述信息 |
+|:---|:---:|---:|
+| 张三 | 30 | 北京 |
+| 李四 | 25 | 上海 |
+| 王五 | 35 | 广州 |
