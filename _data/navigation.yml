@@ -20,7 +20,7 @@ main:
   - title: "旧资料"
     url: /portfolio/
         
-  # - title: "Blog Posts"
+  # - title: "开源项目信息收集"
   #   url: /year-archive/
     
   # - title: "CV"
@@ -29,5 +29,8 @@ main:
   # - title: "CV"
   #   url: /cv-json/
     
-  # - title: "导航"
+  # - title: "开源项目收集"
   #   url: /markdown/
+
+  - title: "开源项目收集"
+    url: /openSourceManagement/

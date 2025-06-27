@@ -227,6 +227,9 @@ collections:
   talks:
     output: true
     permalink: /:collection/:path/
+  openSourceManagement:
+    output: true
+    permalink: /:collection/:path/
 
 
 # These settings control how pages and collections are included in the site
@@ -284,7 +287,14 @@ defaults:
       layout: talk
       author_profile: true
       share: true
-
+#openSourceManagement
+  - scope:
+      path: ""
+      type: openSourceManagement
+    values:
+      layout: openSourceManagement
+      author_profile: true
+      share: true
 
 # Sass/SCSS
 sass:
