@@ -1,5 +1,6 @@
 ---
 title: "开源项目管理"
+layout: page
 collection: openSourceManagement
 type: "技术"
 permalink: /openSourceManagement/author
