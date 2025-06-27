@@ -221,7 +221,7 @@ collections:
   publications:
     output: true
     permalink: /:collection/:path/
-  portfolio:
+  old_data:
     output: true
     permalink: /:collection/:path/
   talks:
