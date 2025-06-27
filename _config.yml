@@ -9,9 +9,9 @@
 # Basic Site Settings
 #locale                   : "en-US"
 site_theme               : "default"
-title                    : "Bin知识图谱"
+title                    : "Bin"
 title_separator          : "-"
-name                     : &name "Bin"
+name                     : &name "Bin Zhang"
 description              : &description "程序员一枚"
 url                      : https://liojian198.github.io/ #https://academicpages.github.io # the base hostname & protocol for your site e.g. "https://[your GitHub username].github.io" or if you already have some other page hosted on Github then use "https://[your GitHub username].github.io/[Your Repo Name]"
 baseurl                  : "" # the subpath of your site, e.g. "/blog"
@@ -23,7 +23,7 @@ repository               : "liojian198/liojian198.github.io"
 author:
   # Biographic information
   avatar           : "profile.png"
-  name             : "基本信息"
+  name             : "Bin Zhang"
   pronouns         : # example: "she/her"  
   bio              : #"Short biography for the left-hand sidebar"
   location         : "中国"
