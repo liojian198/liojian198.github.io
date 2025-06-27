@@ -2,8 +2,8 @@
 title: "开源项目管理"
 layout: page
 collection: openSourceManagement
-type: "技术"
 permalink: /openSourceManagement/author
+excerpt: "开源项目收集及记录相应的情况，方便后续使用"
 date: 2025-06-28
 ---
 

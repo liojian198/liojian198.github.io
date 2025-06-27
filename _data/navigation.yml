@@ -11,12 +11,13 @@ main:
   # - title: "首页"
   #   url: /publications/
 
-  - title: "杂谈"
-    url: /talks/    
-
   - title: "技术"
     url: /teaching/    
     
+  - title: "问题记录"
+    url: /talks/    
+
+
   - title: "旧资料"
     url: /portfolio/
         
