@@ -1,7 +1,7 @@
 ---
 title: "权限系统简介"
 collection: teaching
-type: 技术
+type: '技术'
 excerpt: ''
 permalink: /teaching/author
 date: 2025-06-28
