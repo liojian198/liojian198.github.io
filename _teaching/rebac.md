@@ -1,7 +1,7 @@
 ---
 title: "rebac权限系统"
 collection: teaching
-type: "teaching"
+type: "技术"
 excerpt: ''
 permalink: /teaching/rebac
 date: 2025-06-28
