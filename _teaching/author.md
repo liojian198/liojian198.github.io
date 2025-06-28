@@ -1,7 +1,7 @@
 ---
 title: "细粒度权限管理"
 collection: teaching
-type: teaching
+type: tech
 permalink: /teaching/author
 date: 2025-06-28
 ---
