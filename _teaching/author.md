@@ -4,7 +4,7 @@ collection: teaching
 #type: "teaching"
 excerpt: ''
 permalink: /teaching/author
-#date: 2025-06-28
+date: 2025-06-28
 ---
 
 # 权限系统简介
