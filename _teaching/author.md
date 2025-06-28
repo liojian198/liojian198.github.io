@@ -1,13 +1,13 @@
 ---
 title: "权限系统简介"
 collection: teaching
-type: tech
+type: 技术
 permalink: /teaching/author
 date: 2025-06-28
-
 ---
 
 # 权限系统简介
+
   我们在开发系统的时候，经常要用到权限系统，权限系统的模型有很多，但是主要有如下几种：
   DAC (自主访问控制)，MAC (强制访问控制)，RBAC (基于角色)，ABAC (基于属性)，ReBAC (基于关系)，RuBAC (基于规则)，PBAC (基于策略)，NGAC (下一代访问控制)，IBAC (基于身份)，HBAC (基于历史)，GBAC (基于图)，CBAC (基于上下文)，OrBAC (基于组织)，TRBAC (基于时间)，GRBAC (基于组)
 
