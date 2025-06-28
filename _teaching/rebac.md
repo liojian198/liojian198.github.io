@@ -1,10 +1,10 @@
 ---
 title: "rebac权限系统"
 collection: teaching
-#type: "teaching"
+type: "teaching"
 excerpt: ''
 permalink: /teaching/rebac
-#date: 2025-06-28
+date: 2025-06-28
 toc: true # 启用目录
 toc_label: "aws 问题及解决方案" # 目录标题
 toc_sticky: true # 目录是否固定在侧边 (可选)
