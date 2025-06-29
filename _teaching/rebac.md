@@ -14,6 +14,8 @@ toc_sticky: true # 目录是否固定在侧边 (可选)
 
     ReBAC基于关系的访问控制，是一种先进的授权模型。它通过分析实体之间存在的各种关系来决定用户是否拥有对特定资源的访问权限。相较于传统的 RBAC（基于角色的访问控制）和 ABAC（基于属性的访问控制），ReBAC 提供了更高的灵活性和表达能力，尤其适用于拥有复杂、动态实体关系的应用场景，例如社交网络、协同办公、以及物联网 (IoT) 平台。说到ReBAC就离不开Google的Google Zanzibar论文。
 
+    论文地址：https://www.usenix.org/system/files/atc19-pang.pdf
+
 # Google Zanzibar 概述
 
     Google Zanzibar 是 Google 内部构建的、用于处理全球分布式授权的一致、大规模的系统。它在 2019 年通过一篇同名学术论文首次对外披露，立即在业界引起了广泛关注，并成为了 ReBAC (Relationship-Based Access Control) 模型在实际生产环境中应用的典范。
