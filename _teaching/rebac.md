@@ -66,7 +66,7 @@ toc_sticky: true # 目录是否固定在侧边 (可选)
 
 # ReBAC 建模方式
 
-## 选择最重要的功能(权限相关的用户故事)
+## 一、选择最重要的功能(权限相关的用户故事)
 
     故事：
         1. 如果用户是drive的所有者，他们可以在drive中创建文档。
@@ -84,11 +84,11 @@ toc_sticky: true # 目录是否固定在侧边 (可选)
         11. 用户可以是组织的成员。
         12. 用户如果是文件夹的所有者，或者该文件夹的父文件夹或父drive的查看者或所有者，则可以查看该文件夹。
 
-## 列出对象类型
+## 二、列出对象类型
 
     文档，文件夹， 组织， 用户，Drive 
 
-## 为这些类型列出关系
+## 三、为这些类型列出关系
 
 ### 文档
     parent  父级
@@ -119,7 +119,7 @@ toc_sticky: true # 目录是否固定在侧边 (可选)
     owner  所有者
     can_create_folder    
 
-## 定义关系
+## 四、定义关系
 
     type user
 
@@ -138,7 +138,7 @@ toc_sticky: true # 目录是否固定在侧边 (可选)
         define can_write: editor or owner or owner from parent
         define can_change_owner: owner
 
-## 测试模型
+## 五、测试模型
 
 ### 编写关系元组
 
@@ -157,7 +157,7 @@ toc_sticky: true # 目录是否固定在侧边 (可选)
 
     user beth has relation can_share with document:1
 
-## 迭代
+## 六、迭代
 
 
 
