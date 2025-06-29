@@ -82,7 +82,6 @@ toc_sticky: true # 目录是否固定在侧边 (可选)
 
 ## iot-core 证书权限策略设置注意问题
 
-```json
 
 {
   "Version": "2012-10-17",
