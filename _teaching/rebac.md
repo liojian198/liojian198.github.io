@@ -10,72 +10,37 @@ toc_label: "aws 问题及解决方案" # 目录标题
 toc_sticky: true # 目录是否固定在侧边 (可选)
 ---
 
+# ReBAC 概述
 
+    ReBAC基于关系的访问控制，是一种先进的授权模型。它通过分析实体之间存在的各种关系来决定用户是否拥有对特定资源的访问权限。相较于传统的 RBAC（基于角色的访问控制）和 ABAC（基于属性的访问控制），ReBAC 提供了更高的灵活性和表达能力，尤其适用于拥有复杂、动态实体关系的应用场景，例如社交网络、协同办公、以及物联网 (IoT) 平台。说到ReBAC就离不开Google的Google Zanzibar论文。
 
-# Jekyll 简介
+# Google Zanzibar 概述
 
-Jekyll 是一个静态站点生成器，它将纯文本文件渲染成静态网站。它非常适合博客、项目网站和文档。
+    Google Zanzibar 是 Google 内部构建的、用于处理全球分布式授权的一致、大规模的系统。它在 2019 年通过一篇同名学术论文首次对外披露，立即在业界引起了广泛关注，并成为了 ReBAC (Relationship-Based Access Control) 模型在实际生产环境中应用的典范。
 
-## 什么是静态站点生成器？
+## 基于关系的授权 (ReBAC 的实践)
 
-静态站点生成器（SSG）是一种工具，它从一组输入文件生成一个完整的静态 HTML 网站。它不依赖数据库和服务器端处理，而是生成可以直接由 Web 服务器提供服务的纯 HTML、CSS 和 JavaScript 文件。
+    核心数据模型： Zanzibar 的权限核心是存储关系元组 (Relationship Tuples)。这些元组清晰地定义了实体之间的关系，例如 object#relation@subject。
 
-### SSG 的优势
+        示例： document:report123#editor@user:alice (用户 Alice 是文档 report123 的编辑者)
 
-* **速度快：** 网站是预构建的 HTML 文件，所以访问速度非常快。
-* **安全性高：** 没有动态服务器端代码，攻击面更小。
-* **部署简单：** 更容易托管和部署。
+        示例： folder:project_alpha#viewer@group:engineering_team (工程团队是项目文件夹 project_alpha 的查看者)
 
-### 流行的 SSG
+        示例： group:engineering_team#member@user:bob (用户 Bob 是工程团队的成员)
 
-1.  Jekyll
-2.  Hugo
-3.  Gatsby
-4.  Next.js (也可以作为 SSG 使用)
+    图结构表示： 所有这些关系元组在内部被表示为一个巨大的有向图。授权检查本质上是查询这个图，寻找从请求者到目标资源的路径或关系，从而推导权限。
 
-## Jekyll 入门
+    复杂关系推理： Zanzibar 不仅仅是简单的关系匹配，它还能进行复杂的嵌套和推导，例如，如果用户 Bob 是工程团队的成员，而工程团队是项目文件夹的查看者，那么 Bob 自然也就拥有查看该文件夹内所有内容的权限。
 
-要开始使用 Jekyll，你需要在你的系统上安装 Ruby。
+## 强大的数据一致性
 
-### 安装步骤
+    外部一致性： 这是 Zanzibar 最显著的特点之一。它确保授权决策能尊重用户操作的因果顺序。这意味着，当用户修改权限（如分享一个文件）后，紧随其后的授权检查（如另一个用户尝试访问这个文件）会立即反映最新的权限状态，即使在分布式系统中数据传播存在延迟。
 
-1.  安装 Ruby。
-2.  安装 Bundler：`gem install bundler`。
-3.  在你的项目目录中安装 Jekyll：`bundle install`。
+    Spanner 的支撑： Zanzibar 的数据存储层依赖于 Google 的全球分布式数据库 Spanner，利用其强大的全球原子钟和 TrueTime 技术，实现了跨区域的强一致性保证。
 
-## 自定义你的主题
+    “Zookie”机制： 为了在不牺牲性能的情况下保持一致性，Zanzibar 引入了一个概念叫做 "Zookie"。这是一个不透明的数据结构，包含了最近一次权限更新的时间戳。客户端在发起授权检查时可以带上这个 Zookie，确保授权决策是基于该时间戳或更新后的数据来做出的，从而避免了读取到过期数据。
 
-Minimal Mistakes 主题提供了广泛的自定义选项。
+## Zanzibar的重要性
 
-### 布局和包含文件
+    Zanzibar 的论文不仅展示了 Google 在构建大规模分布式系统方面的卓越工程能力，更重要的是，它为业界提供了一个构建高度一致、可扩展且灵活的授权系统的蓝图。它验证了 ReBAC 模型在面对海量用户和复杂关系时的可行性与强大性，并成为了许多开源项目（如 OpenFGA、AuthZed SpiceDB）和商业授权服务的设计灵感来源。它推动了整个行业对授权系统设计理念的思考和实践。
 
-Jekyll 主题使用**布局**（`_layouts/`）和**包含文件**（`_includes/`）来构建网站结构。你可以通过将它们复制到你项目的相应目录中来覆盖它们。
-
-### Sass 和 CSS
-
-样式通常通过 Sass 进行管理（`_sass/`，`assets/css/`）。你可以修改现有的 Sass 文件或添加自己的自定义 CSS。
-
----
-
-#### 核心 Front Matter 参数解释（针对 Minimal Mistakes 主题）：
-
-* **`title`**：页面的标题。
-* **`layout`**：指定 Jekyll 应该为这个页面使用哪个布局文件（来自 `_layouts/`）。`single` 是 Minimal Mistakes 中用于独立内容页面的常见布局。
-* **`permalink`**：定义这个页面的 URL（例如，`你的网站地址/guides/jekyll-detailed-guide/`）。
-* **`toc: true`**：**这是核心参数。** 将其设置为 `true` 会告诉 Minimal Mistakes 主题根据页面标题自动生成并显示目录。
-* **`toc_label` (可选)**：允许你为目录设置一个自定义标题（例如，“本文目录”）。如果省略，主题将使用默认标题。
-* **`toc_icon` (可选)**：允许你为 `toc_label` 旁边指定一个 Font Awesome 图标。确保你的主题正确链接了 Font Awesome。
-* **`toc_sticky` (可选)**：如果设置为 `true`，当用户滚动页面时，目录会“粘”在屏幕侧边，保持可见。对于长文档来说，这是一个很棒的用户体验功能。
-
----
-
-#### 步骤 2：确保你的 `_config.yml` 已设置（通常主题已完成）
-
-Minimal Mistakes（以及大多数设计良好的主题）的 `_config.yml` 通常已经配置好如何处理 Markdown 并使用必要的 Liquid 和 JavaScript 来渲染目录。你通常不需要在 `_config.yml` 中为目录添加任何特定内容，除非你想自定义全局 Kramdown 设置（如 `toc_levels`）。
-
-#### 3. 运行你的 Jekyll 网站
-
-保存 `my-detailed-guide.md` 文件，然后启动 Jekyll 服务器：
-
-``` bash
-bundle exec jekyll serve
