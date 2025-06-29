@@ -64,6 +64,102 @@ toc_sticky: true # 目录是否固定在侧边 (可选)
     它推动了整个行业对授权系统设计理念的思考和实践。
 
 
+# ReBAC 建模方式
+
+## 选择最重要的功能(权限相关的用户故事)
+
+    故事：
+        1. 如果用户是drive的所有者，他们可以在drive中创建文档。
+        2. 如果用户是drive的所有者，他们可以在drive中创建文件夹。
+        3. 用户如果是文件夹的所有者，可以在文件夹中创建文档。该文件夹是文档的父级。
+        4. 用户如果是文件夹的所有者，可以在文件夹中创建子文件夹。已存在的文件夹是新文件夹的父级。
+        5. 如果用户是文档的所有者或编辑者，或者用户是文档父级文件夹/drive的所有者，
+            用户可以将文档共享给其他用户或组织，并指定为编辑者或查看者。
+        6. 如果用户是文件夹的所有者，他们可以将文件夹共享给其他用户或组织，并设置为查看者。
+        7. 如果用户是文档的所有者、查看者或编辑者，或者他们是该文档所属文件夹/drive的查看者
+            或所有者，则可以查看该文档。
+        8. 如果用户是文档的所有者或编辑者，或者他们是文档所在文件夹/drive的所有者，则可以编辑文档。
+        9. 如果用户是文档的所有者，他们可以更改文档的所有者。
+        10. 用户如果是文件夹的所有者，可以更改文件夹的所有者。
+        11. 用户可以是组织的成员。
+        12. 用户如果是文件夹的所有者，或者该文件夹的父文件夹或父drive的查看者或所有者，则可以查看该文件夹。
+
+## 列出对象类型
+
+    文档，文件夹， 组织， 用户，Drive 
+
+## 为这些类型列出关系
+
+### 文档
+    parent  父级
+    can_share  可共享
+    owner  所有者
+    editor  编辑器
+    can_write  可写
+    can_view  可查看
+    viewer  查看者
+    can_change_owner  可以更改所有者
+
+### 文件夹
+
+    can_create_document  可以创建文档
+    owner  所有者
+    can_create_folder
+    can_view  可查看
+    viewer  查看者
+    parent  父级
+
+### 组织
+
+    member  成员
+
+### Drive 
+
+    can_create_document  可以创建文档
+    owner  所有者
+    can_create_folder    
+
+## 定义关系
+
+    type user
+
+    type organization
+    relations
+        define member: [user, organization#member]
+
+    type document
+    relations
+        define owner: [user, organization#member]
+        define editor: [user, organization#member]
+        define viewer: [user, organization#member]
+        define parent: [folder]
+        define can_share: owner or editor or owner from parent
+        define can_view: viewer or editor or owner or viewer from parent or editor from parent or owner from parent
+        define can_write: editor or owner or owner from parent
+        define can_change_owner: owner
+
+## 测试模型
+
+### 编写关系元组
+
+    { user:"user:anne", relation: "member", object: "organization:contoso"}
+    { user:"user:beth", relation: "member", object: "organization:fabrikam"}
+    { user:"user:anne", relation: "owner", object: "document:1"}
+    { user:"organization:fabrikam#member", relation: "editor", object: "document:1"}
+    { user:"user:beth", relation: "owner", object: "document:2"}
+    { user:"organization:contoso#member", relation: "viewer", object: "document:2"}
+
+
+### 创建断言
+
+    user anne has relation can_share with document:1
+    user anne has relation can_write with document:1
+
+    user beth has relation can_share with document:1
+
+## 迭代
+
+
 
 # ReBAC具体实现
 
