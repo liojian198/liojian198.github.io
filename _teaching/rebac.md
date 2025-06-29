@@ -43,3 +43,25 @@ toc_sticky: true # 目录是否固定在侧边 (可选)
     Zanzibar 的论文不仅展示了 Google 在构建大规模分布式系统方面的卓越工程能力，更重要的是，它为业界提供了一个构建高度一致、
     可扩展且灵活的授权系统的蓝图。它验证了 ReBAC 模型在面对海量用户和复杂关系时的可行性与强大性，并成为了许多开源项目（如 OpenFGA、AuthZed SpiceDB）和商业授权服务的设计灵感来源。它推动了整个行业对授权系统设计理念的思考和实践。
 
+
+
+# ReBAC具体实现
+
+## aws 相关描述
+
+https://aws.amazon.com/es/blogs/database/graph-powered-authorization-relationship-based-access-control-for-access-management/
+
+aws的 AVP服务即实现了ReBAC
+
+
+## 具体开源实现
+
+https://github.com/authzed/spicedb
+
+https://openfga.dev/
+
+https://github.com/ory/keto
+
+https://authzed.com/
+
+https://github.com/Permify/permify
