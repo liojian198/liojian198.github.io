@@ -84,6 +84,8 @@ sudo nano /etc/containerd/config.toml
       [plugins."io.containerd.cri.v1.images".registry.mirrors."k8s.gcr.io"]
         endpoint = ["https://k8s-gcr.m.daocloud.io"]
 
+      [plugins."io.containerd.grpc.v1.cri".registry.mirrors."docker.io"] # 配置 docker.io 的镜像加速器
+        endpoint = ["https://docker.m.daocloud.io"]
 ```
 
 #### 步骤 4：重启 Containerd 服务
