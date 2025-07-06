@@ -134,6 +134,7 @@ https://github.com/DaoCloud/public-image-mirror  试了那么多家，就发现d
 
 
 
+``` yaml
 
 # kube-proxy-rbac.yaml
 apiVersion: rbac.authorization.k8s.io/v1
@@ -182,3 +183,5 @@ subjects:
 - kind: User
   name: system:kube-proxy # 绑定到名为 "system:kube-proxy" 的用户 (kube-proxy 进程通常以此身份向 API Server 认证)
   apiGroup: rbac.authorization.k8s.io
+
+  ```
