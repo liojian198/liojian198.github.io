@@ -131,3 +131,54 @@ kubectl delete pod <问题Pod名称> -n <命名空间>
 ### 镜像源查找
 
 https://github.com/DaoCloud/public-image-mirror  试了那么多家，就发现daocloud 靠谱，
+
+
+
+
+# kube-proxy-rbac.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  annotations:
+    rbac.authorization.kubernetes.io/autoupdate: "true"
+  labels:
+    kubernetes.io/bootstrapping: rbac-defaults
+  name: system:kube-proxy # ClusterRole 的名称
+rules:
+- apiGroups: [""]
+  resources:
+  - endpoints
+  - services
+  - nodes
+  - pods # 允许 kube-proxy 列出 Pods，以获取 Endpoint 信息
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups: ["discovery.k8s.io"] # 对于较新版本的 Kubernetes，使用 EndpointSlices
+  resources:
+  - endpointslices
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups: ["coordination.k8s.io"] # 用于 Leader Election (如果 kube-proxy 使用)
+  resources:
+  - leases
+  verbs:
+  - create
+  - get
+  - update
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: system:kube-proxy # ClusterRoleBinding 的名称
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: system:kube-proxy # 绑定到上面定义的 ClusterRole
+subjects:
+- kind: User
+  name: system:kube-proxy # 绑定到名为 "system:kube-proxy" 的用户 (kube-proxy 进程通常以此身份向 API Server 认证)
+  apiGroup: rbac.authorization.k8s.io
