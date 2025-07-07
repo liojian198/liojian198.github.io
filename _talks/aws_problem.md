@@ -106,3 +106,17 @@ toc_sticky: true # 目录是否固定在侧边 (可选)
     }
   ]
 }
+
+### 证书策略没有配置正确，客户端连接的时候，会报如下错误:
+
+
+``` python
+
+I (84364) core_mqtt_agent_manager: TLS connection established.
+E (84974) network_transport: Connection closed
+E (84974) coreMQTT: A single byte was not read from the transport: transportStatus=-1.
+E (84974) coreMQTT: CONNACK recv failed with status = MQTTRecvFailed.
+E (84984) coreMQTT: MQTT connection failed with status = MQTTRecvFailed.
+I (84994) core_mqtt_agent_manager: Session present: 0
+
+```
