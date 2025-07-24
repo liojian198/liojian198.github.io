@@ -55,3 +55,41 @@ date: 2025-07-25
 1. Kafka 在 MQTT 消息处理的各个阶段都起着至关重要的作用。所有未处理的发布消息、客户端会话和订阅信息都存储在专门的 Kafka 主题中。TBMQ 中使用的 Kafka 主题的完整列表可以在后续部分找到。所有代理节点都可以通过使用这些主题来轻松访问客户端会话和订阅的最新状态。它们维护会话和订阅的本地副本，以实现高效的消息处理和投递。当客户端与特定代理节点失去连接时，其他节点可以基于最新状态无缝继续操作。此外，新加入集群的代理节点在激活时也会获取这些关键信息。
 
 2. 客户端订阅在 MQTT 发布/订阅模式中具有重要意义。TBMQ 采用 Trie 数据结构来优化性能，能够高效地在内存中持久化客户端订阅，并促进对相关主题模式的快速访问。
+
+3. 当发布者客户端发送 PUBLISH 消息时，该消息会存储在初始 Kafka 主题 tbmq.msg.all 中。一旦 Kafka 确认消息的持久化，代理会根据所选的 QoS 级别立即向发布者响应 PUBACK/PUBREC 消息或完全不响应。
+
+4. 随后，作为 Kafka 消费者的独立线程会从提到的 Kafka 主题中消费消息，并利用订阅 Trie 数据结构来识别目标接收者。根据客户端类型（DEVICE 或 APPLICATION）以及下文描述的持久化选项，代理会将消息重定向到另一个特定的 Kafka 主题或直接交付给接收者。
+
+
+## Kafka topics 
+
+以下是 TBMQ 中使用的 Kafka 主题的全面列表及其相应描述。
+
+tbmq.msg.all - 用于存储从 MQTT 客户端发布到代理的所有消息的主题。
+
+tbmq.msg.app. + ${client_id} - 用于存储基于其订阅应用程序客户端应接收的消息的主题。
+
+tbmq.msg.app.shared. + ${topic_filter} - 主题用于存储应用程序客户端应接收的消息，这些消息基于它们共同的共享订阅。
+
+tbmq.msg.persisted - 主题用于存储设备持久客户端应接收的消息，这些消息基于它们的订阅。
+
+tbmq.msg.retained - 用于存储所有持久消息的主题。与 MQTT 持久消息功能相关
+
+tbmq.client.session - 用于存储所有客户端会话的主题。
+
+tbmq.client.subscriptions - 用于存储所有客户端订阅的主题。
+
+tbmq.client.session.event.request - 用于存储所有客户端会话的事件，如 CONNECTION_REQUEST、DISCONNECTION_REQUEST、CLEAR_SESSION_REQUEST 等的主题。
+
+tbmq.client.session.event.response. + ${service_id} - 主题用于存储针对先前主题发送到特定代理节点的响应事件，其中目标客户端已连接。
+
+tbmq.client.disconnect. + ${service_id} - 主题用于存储强制客户端断开连接事件（由 UI/API 管理员请求或会话冲突触发）。
+
+tbmq.msg.downlink.basic. + ${service_id} - 主题用于将消息从一个代理节点发送到当前已连接的 DEVICE 订阅者所在的另一个代理节点。
+
+tbmq.msg.downlink.persisted. + ${service_id} - 主题用于将消息从一个代理节点发送到当前已连接的 DEVICE 持久订阅者所在的另一个代理节点。
+
+tbmq.sys.app.removed - 用于处理 APPLICATION 客户端主题删除事件的发布主题。当客户端类型从 APPLICATION 更改为 DEVICE 时使用。
+
+tbmq.sys.historical.data - 用于发布每个集群中每个代理节点的历史数据统计信息（例如，接收消息数量、发送消息数量等）的主题，以计算每个集群的总值。
+
