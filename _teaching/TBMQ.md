@@ -65,85 +65,218 @@ date: 2025-07-25
 
 以下是 TBMQ 中使用的 Kafka 主题的全面列表及其相应描述。
 
-<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>产品列表</title>
-    <style>
-        /* 这里是可选的 CSS 样式，用于美化表格 */
-        table {
-            width: 80%; /* 表格宽度占父容器的80% */
-            border-collapse: collapse; /* 合并单元格边框 */
-            margin: 20px auto; /* 上下外边距20px，左右自动居中 */
-            font-family: Arial, sans-serif;
-        }
-        th, td {
-            border: 1px solid #ddd; /* 单元格边框 */
-            padding: 12px; /* 单元格内边距 */
-            text-align: left; /* 默认左对齐 */
-        }
-        th {
-            background-color: #f2f2f2; /* 表头背景色 */
-            font-weight: bold;
-            color: #333;
-        }
-        tr:nth-child(even) { /* 隔行换色 */
-            background-color: #f9f9f9;
-        }
-        tr:hover { /* 鼠标悬停高亮 */
-            background-color: #f1f1f1;
-        }
-        .text-center {
-            text-align: center; /* 居中对齐的类 */
-        }
-        .text-right {
-            text-align: right; /* 右对齐的类 */
-        }
-    </style>
-</head>
-<body>
+### tbmq.msg.all 
 
-    <h2>开源项目集合</h2>
+#### 描述
 
-    <table>
-        <thead>
-            <tr>
-                <th>项目名称</th>
-                <th class="text-center">项目地址</th>
-                <th class="text-left">项目描述</th>
-                <th>备注</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td>spicedb</td>
-                <td class="text-center">https://github.com/authzed/spicedb</td>
-                <td class="text-left">开源，受 Google Zanzibar 启发的数据库，用于可扩展地存储和查询细粒度授权数据</td>
-                <td>ReBAC的实现</td>
-            </tr>
+  存储从 MQTT 客户端发布到代理的所有消息。
 
-        </tbody>
-    </table>
+#### 生产者 
 
-</body>
-</html>
+  MQTT 消息接收器/协议处理器线程：当 TBMQ Broker 节点收到任何 MQTT 客户端（设备或应用）的 PUBLISH 消息时。
+
+#### 消费者 
+
+TBMQ 集群中所有 Broker 节点：1. 内部消息路由器/分发器：处理入站消息，决定如何进一步路由（到特定客户端、共享订阅、持久化、保留消息等）。2. 全局统计服务：用于汇总集群范围的入站消息统计。
+
+
+### tbmq.msg.app. + ${client_id} 
+
+#### 描述
+
+  存储基于其订阅应用程序客户端应接收的消息。
+
+#### 生产者 
+
+  内部消息路由器/分发器线程：当 tbmq.msg.all 主题中的消息需要被发送给特定的应用程序客户端时。
+
+#### 消费者 
+
+负责该 ${client_id} 连接的特定 Broker 节点上的应用程序消息派发器线程：将消息通过 MQTT 协议实际发送给连接的客户端。
+
+### tbmq.msg.app.shared. + ${topic_filter} 
+
+#### 描述
+
+  存储应用程序客户端应接收的消息，这些消息基于它们共同的共享订阅。
+
+#### 生产者 
+
+  内部消息路由器/分发器线程：当 tbmq.msg.all 主题中的消息需要被发送给共享订阅组时。
+
+#### 消费者 
+
+TBMQ 集群中所有 Broker 节点上的共享订阅消息分发器线程：负责从共享订阅主题中拉取消息，并通过内部协调机制（如一致性哈希）确保消息被负载均衡地发送给共享订阅组中的一个成员。
+
+### tbmq.msg.persisted 
+
+#### 描述
+
+  存储设备持久客户端应接收的消息，这些消息基于它们的订阅。
+
+#### 生产者 
+
+  内部消息路由器/分发器线程：当 tbmq.msg.all 主题中的消息需要被发送给持久会话的设备客户端时，无论该客户端当前是否在线，消息都会先进入此主题进行持久化。
+
+#### 消费者 
+
+TBMQ 集群中所有 Broker 节点上的持久会话消息恢复/分发器线程：当持久会话客户端重新连接到任何 Broker 节点时，该节点会从这个主题拉取该客户端的离线消息并发送。
+
+### tbmq.msg.retained 
+
+#### 描述
+
+  存储所有持久消息。与 MQTT 持久消息功能相关。
+
+#### 生产者 
+
+  保留消息管理器线程：当收到带有 Retain 标志的 PUBLISH 消息时。
+
+#### 消费者 
+
+TBMQ 集群中所有 Broker 节点上的保留消息管理器/分发器线程：当新的订阅者上线并订阅一个主题时，其连接的 Broker 需要能从这个主题中获取保留消息并发送。此外，当接收到新的保留消息时，所有节点都需要更新其对保留消息的内部视图。
+
+
+### tbmq.client.session
+
+#### 描述
+
+  存储所有客户端会话。
+
+#### 生产者 
+
+  客户端会话管理器线程：当 MQTT 客户端连接、断开、订阅、取消订阅、或会话状态发生任何变化时（如 QoS 消息状态更新）。
+
+#### 消费者 
+
+TBMQ 集群中所有 Broker 节点上的客户端会话管理器/同步器线程：每个节点都需要消费这个主题来维护所有客户端的全局会话视图，尤其用于会话的“接管”（Session Takeover）和状态同步。
+
+### tbmq.client.subscriptions 
+
+#### 描述
+
+  存储所有客户端订阅。
+
+#### 生产者 
+
+  客户端订阅管理器线程：当客户端发起 SUBSCRIBE 或 UNSUBSCRIBE 请求时。
+
+#### 消费者 
+
+TBMQ 集群中所有 Broker 节点上的客户端订阅管理器/同步器线程：所有节点都需要订阅信息来进行消息路由决策。
+
+### tbmq.client.session.event.request 
+
+#### 描述
+
+  存储所有客户端会话的事件，如 CONNECTION_REQUEST、DISCONNECTION_REQUEST、CLEAR_SESSION_REQUEST 等。
+
+#### 生产者 
+
+  MQTT 协议处理器线程：当客户端发起 CONNECT、DISCONNECT 等请求时。UI/API 管理员请求处理线程：当通过管理界面或 API 请求清除会话等操作时。
+
+#### 消费者 
+
+TBMQ 集群中所有 Broker 节点上的会话事件处理器/协调器线程：所有节点都可能处理这些事件以更新全局会话状态或触发后续流程（如会话冲突处理）。
+
+### tbmq.client.session.event.response. + ${service_id} 
+
+#### 描述
+
+  存储针对先前主题发送到特定代理节点的响应事件，其中目标客户端已连接。
+
+#### 生产者 
+
+  会话事件处理器/协调器线程：在处理 tbmq.client.session.event.request 后，需要向特定的 Broker 节点发送响应时。
+
+#### 消费者 
+
+目标 ${service_id} (即 Broker 节点 ID) 对应的特定 Broker 节点上的会话事件响应处理器线程：处理发给本节点的会话管理响应。
+
+### tbmq.client.disconnect. + ${service_id} 
+
+#### 描述
+
+  存储强制客户端断开连接事件（由 UI/API 管理员请求或会话冲突触发）。
+
+#### 生产者 
+
+  UI/API 管理员请求处理线程：当管理员通过界面或 API 请求强制客户端断开连接时。会话冲突检测器线程：当检测到同一 client_id 有新的连接，需要断开旧连接时。
+
+#### 消费者 
+
+目标 ${service_id} (即 Broker 节点 ID) 对应的特定 Broker 节点上的客户端连接管理器/断开连接处理器线程：接收并执行强制断开连接的指令。
+
+### tbmq.msg.downlink.basic. + ${service_id} 
+
+#### 描述
+
+  将消息从一个代理节点发送到当前已连接的 DEVICE 订阅者所在的另一个代理节点。
+
+#### 生产者 
+
+内部消息路由器/转发器线程：当 tbmq.msg.all 消息需要发送给连接到不同 Broker 节点的订阅者时。
+
+#### 消费者 
+
+目标 ${service_id} (即 Broker 节点 ID) 对应的特定 Broker 节点上的下行消息派发器线程：接收并转发消息给连接到本节点的设备订阅者。
+
+### tbmq.msg.downlink.persisted. + ${service_id} 
+
+#### 描述
+
+  将消息从一个代理节点发送到当前已连接的 DEVICE 持久订阅者所在的另一个代理节点。
+
+#### 生产者 
+
+内部消息路由器/转发器线程：当持久会话的设备订阅者连接到不同 Broker 节点时，需要发送持久化消息或离线消息时。
+
+#### 消费者 
+
+TBMQ 集群中负责统计数据聚合的特定服务或一个中央监控组件线程：可能是一个独立的 TBMQ 内部服务实例，它消费所有节点的统计数据并进行汇总，用于展示在管理界面或导出给外部监控系统。
+
+### tbmq.sys.app.removed 
+
+#### 描述
+
+处理 APPLICATION 客户端主题删除事件的发布主题。当客户端类型从 APPLICATION 更改为 DEVICE 时使用。
+
+#### 生产者 
+
+  客户端类型变更处理器线程：当检测到应用程序客户端的类型需要更改（例如，被 ThingsBoard 管理员更改为设备类型时）。
+
+#### 消费者 
+
+TBMQ 集群中负责统计数据聚合的特定服务或一个中央监控组件线程：可能是一个独立的 TBMQ 内部服务实例，它消费所有节点的统计数据并进行汇总，用于展示在管理界面或导出给外部监控系统。
+
+
+### tbmq.sys.historical.data 
+
+#### 描述
+
+  发布每个集群中每个代理节点的历史数据统计信息（例如，接收消息数量、发送消息数量等），以计算每个集群的总值。
+
+#### 生产者 
+
+内部统计数据收集器线程：在每个 Broker 节点上定时收集本地的统计数据。
+
+#### 消费者 
+
+TBMQ 集群中负责统计数据聚合的特定服务或一个中央监控组件线程：可能是一个独立的 TBMQ 内部服务实例，它消费所有节点的统计数据并进行汇总，用于展示在管理界面或导出给外部监控系统。
+
 
 ## 持久化相关内容
 
   有用TBMQ的设计是代理是无状态的，理论上库水平扩点，但是state 部分的瓶颈也是影响到代理的扩容。所以扩容不是看单一的内容的扩容，要考虑上下游。TBMQ是使用了中心化的状态持久化， 不像EMQX使用去中心化的方式，在每个node下面有个sqlite，使用EMQX的数据一致性的局限性比较大，但是没有单点问题，比较灵活，自治。 根据文档信息，TBMQ的持久化分为设备持久化和应用的持久化。
 
-  ### 设备持久化
+### 设备持久化
 
-  #### device_session_ctx 表格负责维护每个持久 MQTT 客户端的会话状态.
-
-  Table "public.device_session_ctx"
-       
+#### device_session_ctx 表格负责维护每个持久 MQTT 客户端的会话状态.
 
 #### device_publish_msg 表格负责存储必须发布给持久 MQTT 客户端（订阅者）的消息。
 
-                       
+
+### 应用程序客户端持久化
 
 
 注意: TBMQ官网使用redis来优化性能。
