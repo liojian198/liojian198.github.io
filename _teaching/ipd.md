@@ -7,7 +7,7 @@ permalink: /teaching/ipd
 date: 2025-08-01
 ---
 
-# 
+# IPD方法论
 
 ## 市场管理工具：打造正确的产品
 
