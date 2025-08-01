@@ -1,9 +1,9 @@
 ---
-title: "Wardley Maps"
+title: "Wardley Maps--关于室内安全的例子"
 collection: teaching
 type: "技术"
 excerpt: ''
-permalink: /teaching/wardley_maps
+permalink: /teaching/crisp_dm
 date: 2025-08-02 10:48:00
 ---
 
