@@ -4,7 +4,7 @@ collection: teaching
 type: "技术"
 excerpt: ''
 permalink: /teaching/crisp_dm
-date: 2025-08-02 21:48:00
+date: 2025-08-02 07:48:00
 ---
 
 # 简介
