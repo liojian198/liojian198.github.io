@@ -13,6 +13,8 @@ date: 2025-08-25
 
   参考这位老哥的文章(https://www.pracdata.io/p/open-source-data-engineering-landscape-2025,https://substack.com/@alirezasadeghi1，很有深度。后续再解读。
 
+  https://www.pracdata.io/
+
   参考https://github.com/pracdata/awesome-open-source-data-engineering?tab=readme-ov-file.也是那位老哥搞得。年纪轻轻，
 
   # 开局上图
