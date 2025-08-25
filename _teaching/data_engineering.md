@@ -25,6 +25,34 @@ date: 2025-08-25
 
 ## STORAGE SYSTEMS  存储系统
 
+  从更高的层次去看存储系统，如下图
+
+  <img src='/images/data_engineering/image_storage_system.png'>
+
+
+### OLAP Extensions & HTAS  OLAP 扩展和 HTAS
+
+ These extensions allow to seamlessly extend OLTP databases, transforming these systems into HTAP (Hybrid Transactional/Analytical Processing) or new HTAS (Hybrid Transactional Analytical Storage) database engine that integrate headless data storage—like data lakes and lakehouses—with transactional database systems.
+
+ 参考文章: https://jack-vanlightly.com/blog/2024/5/2/hybrid-transactional-analytical-storage
+
+  <img src='/images/data_engineering/image_htas.png'>
+
+
+### Zero-Disk Architecture  零磁盘架构
+
+  零磁盘架构可能是存储系统中最具变革性的趋势，从根本上改变了数据库系统管理存储和计算层的方式。
+
+  这种架构方法完全消除了对本地附加磁盘的需求，而是使用 S3 对象存储等远程深度存储解决方案作为主要持久层。
+
+  除了 OLAP 存储系统（例如云数据仓库和开放表格式）之外，我们还见证了这种模式在 NoSQL、实时、流式和事务系统中的显着出现.
+
+  基于磁盘的系统与零磁盘系统的主要 权衡是成本与性能 ， 以及读取和写入物理存储数据的 I/O 延迟 。虽然基于磁盘的系统可以管理快速的亚毫秒级 I/O，但零磁盘系统通过廉价的可扩展对象存储实现了规模经济性，但代价是在向对象存储服务读取和写入数据时面临长达一秒的延迟。
+
+  参考文章: https://www.pracdata.io/p/zero-disk-architecture-the-future
+
+  <img src='/images/data_engineering/image_zero_disk.png'>
+
 ### Relational DBMS  关系型 DBMS
 
   PostgreSQL - 高级对象关系数据库管理系统
