@@ -19,7 +19,12 @@ date: 2025-09-20
 
 <img src='/images/alexa/tokens.png'>
 
-    注意http code 的301使用。
+    注意http code 的301使用。 这里不涉及APP里面弹起内置浏览器，然后app通浏览器里面拿code码的流程，不需要在APP端定义协议做这个事情。
+
+
+# 大概的配置
+
+ 1. Alexa Developer Console。 后台设置，有话术，意图，lambda等的设置要注意。
 
 
 
