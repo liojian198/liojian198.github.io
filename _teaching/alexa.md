@@ -13,11 +13,11 @@ date: 2025-09-20
 
 # alexa 对接全景交互时序图
 
-      <img src='/images/alexa/alexa.png'>
+<img src='/images/alexa/alexa.png'>
 
 # alexa 用户系统与我们的用户系统打通
 
-    <img src='/images/alexa/tokens.png'>
+<img src='/images/alexa/tokens.png'>
 
     注意http code 的301使用。
 
