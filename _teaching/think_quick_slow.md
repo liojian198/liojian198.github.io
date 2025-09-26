@@ -4,7 +4,7 @@ collection: teaching
 type: "技术"
 excerpt: ''
 permalink: /teaching/think_quick_slow
-date: 2025-07-09
+date: 2025-07-27
 ---
 
 # 概述
