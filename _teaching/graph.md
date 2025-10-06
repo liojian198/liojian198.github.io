@@ -2335,6 +2335,207 @@ toc_sticky: true # 目录是否固定在侧边 (可选)
 
 #### Intermezzo:Interval graph (略)
 
+
+### 模块分解（Modular Decomposition）
+
+    模块分解（Modular Decomposition）是图论中一个极其强大的结构分解技术。它能将任意一个图 G（无论是无向图还是有向图）唯一地分解成一个层次树结构，揭示图中最基本的、不可再分的**“原子”**结构。
+
+    这种分解方法基于模块（Module）的概念，是解决许多图论问题（特别是那些在图的导出子图上表现良好的问题）的关键预处理步骤。
+
+    算法意义与应用
+        模块分解是解决图论优化问题的**分治（Divide and Conquer）**策略的关键。
+
+        A. 线性时间计算
+        与树宽的计算（NP-Hard）不同，模块分解具有惊人的高效性：
+
+        任何图 G 的模块分解树都可以在线性时间 O(∣V∣+∣E∣) 内计算出来。
+
+        这种效率使其成为许多复杂图算法的理想预处理步骤。
+
+        B. 问题的简化（基于结构）
+        许多在图的导出子图上具有良好性质的问题（如最大团、最大独立集、着色数、哈密尔顿回路），都可以通过 MDT 在线性时间内从叶子节点递归地向上传播结果来解决：
+
+        并行节点 (P)： 问题的解是其子模块解的简单求和或求最大值。
+
+        串行节点 (S)： 问题的解是其子模块解的简单求和或求最大值。
+
+        素数节点 (N)： 只需在这些不可约的核心结构上应用复杂的算法。
+
+#### 模块分解树（Modular Decomposition Tree, 简称 MDT）
+
+    模块分解树（Modular Decomposition Tree, 简称 MDT）是图论中一个极其优雅且实用的概念。它是一种唯一的、层次化的树形结构，用于表示任意图 G 中所有模块（即行为相同的顶点集合）的关系。
+
+    MDT 将图的复杂性封装在简单的层次结构中，是解决许多 NP-Hard 图论问题的关键工具。
+
+#### A linear -time modular decomposition
+
+    计算图的模块分解树 (MDT) 本身就是一个图论中的经典算法问题。将这个计算过程从高次多项式时间优化到线性时间 O(∣V∣+∣E∣) 是一项重大的理论突破，使得模块分解在实践中成为分析大规模图的有效工具。
+
+    要理解线性时间模块分解是如何实现的，我们需要关注算法学家如何避开了指数级或二次级时间的暴力检查，转而利用模块的结构特性。
+
+### 秩宽（Rankwidth）
+
+    秩宽（Rankwidth）是图论中一个重要的结构宽度参数。它与树宽（Treewidth）和分支分解宽度（Bond-Carving Width）类似，都是衡量图结构复杂性和“树状程度”的指标，但其独特之处在于它使用线性代数（具体来说是矩阵的秩）来定义图的分隔难度。
+
+    秩宽在处理稠密图时具有显著优势，因为在这些图上，树宽往往会非常大。
+
+#### 距离遗传图（Distance-Hereditary Graphs, 简称 DHGs）
+
+    距离遗传图（Distance-Hereditary Graphs, 简称 DHGs）是图论中一个重要的图类，它们以其独特的**度量（Metric）**性质而得名。这类图不仅具有强大的结构约束，而且使得许多在一般图上难以解决的优化问题变得可以高效求解。
+
+#### Intermezzo:Perfect graphs (略)
+
+    完美图族谱 (The Family Tree of Perfect Graphs)
+    许多行为良好的图类都是完美图的子集：
+
+        弦图（Chordal Graphs）： 都是完美图。
+
+        二分图（Bipartite Graphs）： 都是完美图（χ=2,ω=2）。
+
+        区间图（Interval Graphs）： 是弦图，因此是完美图。
+
+        距离遗传图（Distance-Hereditary Graphs）： 都是完美图。
+
+        比较图（Comparability Graphs）： 都是完美图。
+
+
+#### X-有界性（X-Boundedness）
+
+    X-有界性（X-Boundedness）是结构图论和参数化复杂度理论中的一个元概念（meta-concept），它描述了图的两个属性或参数之间存在的约束关系。
+
+    简单来说，如果一个图类 G 具有 X-有界性，这意味着图的一个复杂性参数 Y 的值，可以由另一个更简单或更容易计算的参数 X 的值所约束或限制。
+
+#### Governed decompositions （略）
+
+#### forward Ramsey splits
+
+#### Factorization of trees
+
+#### Kruskalian decompositions
+
+### Clustered coloring
+
+#### Bandwidth and BFS- trees with few leaves
+
+#### Connected partitions
+
+#### A decomposition of Kt minor free graphs
+
+### Well-Quasi Orders
+
+#### Higman's lemma
+
+#### Kruskal's Theorem
+
+#### Gap embeddings
+
+### Threshold graphs and threshold - width
+
+#### Threshold -width
+
+#### On the complexity of threshold - width
+
+#### A fixed -parameter algorithm for threshold-width 
+
+### Black and white - coloring 
+
+#### The complexity of black and white -coloring
+
+### k-cographs
+
+#### Recognition of k-Cographs.
+
+#### Recognition of k-Cographs- revisited
+
+#### Treewidth of cographs
+
+### The Graph Minor Theorem
+
+### General partition Graphs
+
+### Tournament 
+
+#### Tournament games
+
+#### Trees in tournaments
+
+#### lmmersions in tournaments
+
+####  Domination in tournaments
+
+### lmmersions 
+
+#### Intermezzo: Topological minor
+
+#### Strongimmersions in series -parallel digraphs
+
+#### ntermezzo on 2-trees
+
+#### Series parallel-triples
+
+#### A well quasi - order for one way series parallel
+
+#### Series parallel separations
+
+### Asteroidal sets
+
+#### AT -free graphs
+
+#### Independent set in AT-free graphs.
+
+#### Bandwidth of AT-free graphs
+
+#### Dominating pairs
+
+#### Antimatroids 
+
+#### Totally balanced matrices
+
+#### Triangle graphs
+
+### SensitiVity
+
+#### Cauchy's interlace lemma 
+
+#### Hypercubes
+
+#### Mobius inversion
+
+#### The equivalence theorem
+
+### Homomorphisms 
+
+#### Retracts 
+
+#### Retracts in threshold graphs
+
+#### Retracts in cographs
+
+###  Categorical products of cographs
+
+### Tensor capacity
+
+### Cartesian products
+
+### Independence domination in cographs
+
+### outerplanar graphs
+
+#### k-uterplanar Graphs
+
+#### Courcelle 's Theorem
+
+#### Approximations for Planar Graphs 
+
+#### Independent Set in Planar Graphs
+
+### Graph isomorphism 
+
+    图同构（Graph Isomorphism）是图论中最基础、最核心，同时也是最富挑战性的问题之一。它本质上是问：两个图是否只是标记不同，而在结构上是完全相同的？
+
+    例如 Nauty 算法
+
+    
 # 常见应用
 
 ## 图算法描述
