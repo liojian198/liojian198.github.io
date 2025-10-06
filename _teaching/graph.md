@@ -1,13 +1,11 @@
 ---
-title: "图"
+title: "图算法"
 collection: teaching
 type: "技术"
 excerpt: ''
 permalink: /teaching/graph
 date: 2025-10-05
-toc: true # 启用目录
-toc_label: "aws 问题及解决方案" # 目录标题
-toc_sticky: true # 目录是否固定在侧边 (可选)
+
 ---
 
 # 简述
