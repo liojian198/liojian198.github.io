@@ -22,3 +22,21 @@ date: 2025-10-17
 
     https://github.com/AnimeAIChat/xiaozhi-server-go
 
+## 海外平台
+
+    https://github.com/moeru-ai/airi?tab=readme-ov-file
+
+    https://www.zdoc.app/zh/emcie-co/parlant
+
+    https://github.com/pipecat-ai/pipecat
+
+    https://github.com/TEN-framework/ten-framework
+
+    https://docs.livekit.io/agents/build/audio/
+
+    https://github.com/second-state/echokit_server
+
+    https://github.com/steipete/agent-rules
+
+    
+
