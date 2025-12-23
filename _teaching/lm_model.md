@@ -122,4 +122,40 @@ date: 2025-12-23
 
   在深度学习中，LoRA 和 QLoRA 是目前最流行的“低成本”微调技术。它们的核心目标一致：不改动大模型的主体，只训练极少数的额外参数，让普通人也能在消费级显卡（甚至 M4 Mac）上玩转百亿参数模型。
 
-  
+  具体的细化对比略。
+
+## LLaMA-Factory 
+
+  LLaMA-Factory 是目前开源社区中最受欢迎、也是最强大的大模型微调“全家桶”工具库。它由 hiyouga 开发，核心价值在于将复杂的微调代码抽象化，让用户通过简单的可视化界面（WebUI）或 YAML 配置文件，就能完成从数据准备到模型导出的全流程。
+
+### 核心架构与模块
+
+  LLaMA-Factory 内部主要由三个功能模块驱动：
+
+  1. Model Loader (模型加载器)：适配了上百种开源模型（如 Llama 3, Qwen 2.5, DeepSeek, GLM-4），支持各种精度的量化加载（2/3/4/5/6/8-bit）。
+
+  2.Data Worker (数据处理器)：自动处理不同格式的训练数据（如 Alpaca 格式、ShareGPT 格式），并将其转化为模型可读的 Token。
+
+  3.Trainer (训练器)：集成了主流的训练算法，包括 SFT（指令微调）、PPO/DPO（强化学习对齐）、预训练等。
+
+### 为什么它是“微调神器”？
+
+  LLaMA-Factory 相比于直接写 PyTorch 代码，有几个杀手锏级别的优势：
+
+  1. 可视化操作 (LlamaBoard)： 即使你一行代码都不会写，也可以通过 llamafactory-cli webui 启动一个网页。在网页上通过下拉框选择模型、拖动进度条设置学习率、一键开始训练并实时查看 Loss 曲线。
+
+  2.算法集成度极高： 它不仅支持 LoRA 和 QLoRA，还集成了最新的优化算法，如 DoRA（权重分解自适应）、GaLore（梯度低秩投影，能让 8G 显存跑大模型全量微调）、Unsloth（极速加倍且显存减半）。
+
+  3.多模态支持： 它不仅能微调纯文本模型，还完美支持 VLM（视觉语言模型），如 LLaVA、Qwen-VL 等，支持图像理解和视频分析任务。
+
+### 支持的模型全家桶
+
+  LLaMA-Factory 几乎支持目前所有主流的开源模型系列： 
+  | 厂商/系列 | 代表模型 |
+  | :--- | :--- | 
+  | Meta | Llama 2 / 3 / 3.1 / 3.2 (Vision) | 
+  | 阿里 (Qwen) | Qwen 2 / 2.5 / VL / Audio | 
+  | 深度求索 | DeepSeek LLM / Coder / R1 (Distill) | 
+  | 智谱 (GLM) | ChatGLM 3 / GLM-4 / 4V | 
+  | Google | Gemma / Gemma 2 / 3 | 
+  | 其他 | Mistral, Mixtral, Phi-3, Baichuan, Yi |
