@@ -151,8 +151,9 @@ date: 2025-12-23
 ### 支持的模型全家桶
 
   LLaMA-Factory 几乎支持目前所有主流的开源模型系列： 
+  
   | 厂商/系列 | 代表模型 |
-  | :--- | :--- | 
+  |--|--| 
   | Meta | Llama 2 / 3 / 3.1 / 3.2 (Vision) | 
   | 阿里 (Qwen) | Qwen 2 / 2.5 / VL / Audio | 
   | 深度求索 | DeepSeek LLM / Coder / R1 (Distill) | 
