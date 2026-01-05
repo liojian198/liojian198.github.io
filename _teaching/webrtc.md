@@ -333,6 +333,7 @@ WHIP：推流流程 (Ingestion)
 ### 典型架构应用
 
 在现代直播架构中，WHIP 和 WHEP 通常配合 SFU（选择性转发单元） 服务器使用：
-  推流端： 使用支持 WHIP 的编码器（如 OBS Studio, FFmpeg）推流到云端。
-  服务端 (SFU)： 接收 WHIP 流，不进行重编码，直接将数据包通过 WebRTC 转发。
-  播放端： 网页使用简单的 WHEP 播放器通过 HTTP URL 订阅该流。
+
+  1. 推流端： 使用支持 WHIP 的编码器（如 OBS Studio, FFmpeg）推流到云端。
+  2. 服务端 (SFU)： 接收 WHIP 流，不进行重编码，直接将数据包通过 WebRTC 转发。
+  3. 播放端： 网页使用简单的 WHEP 播放器通过 HTTP URL 订阅该流。
