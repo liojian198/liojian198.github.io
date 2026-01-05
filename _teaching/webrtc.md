@@ -65,7 +65,7 @@ date: 2026-01-05
 
   这种多线程设计确保了即使视频编码很耗资源，也不会导致网络包接收出现延迟。
 
-## webRTC多工资流程及各个流程详解(P2P模式)
+## webRTC多工作流程及各个流程详解(P2P模式)
 
   WebRTC 的全流程是一个极其精密、多层联动的实时系统，旨在将延迟控制在 500ms 以内。
   这个流程可以拆解为：采集（Capture）、处理（Processing）、传输（Transport） 和 渲染（Playback） 四个核心阶段。
@@ -184,3 +184,52 @@ date: 2026-01-05
 |4| 传输|加密通道|SRTP / DTLS / UDP|
 |5| 抗抖动|接收端缓冲|Jitter Buffer / NetEq|
 |6| 呈现|渲染引擎|GPU Rendering/Audio Renderer|
+
+## webRTC多工作流程及各个流程详解(SFU模式）
+
+  引入 LiveKit 服务器后，WebRTC 的四个阶段从传统的“点对点 (P2P)” 演变成了 “端-服务器-端 (Pub/Sub)” 的 SFU（Selective Forwarding Unit，选择性转发单元）架构。
+  在这种架构下，LiveKit 充当了“智能路由”的角色。以下是加入 LiveKit 后各阶段的详细处理细节：
+
+### 采集与预处理 (Capture & Ingress)
+
+  在 LiveKit 体系中，采集不仅限于浏览器，还包括外部流的拉取。
+
+    客户端采集： SDK（JS/Swift/Kotlin）调用本地硬件，进行 3A 算法（回声消除 AEC、降噪 ANS、增益 AGC）预处理。
+    Ingress（外部输入）： * WHIP/RTMP 接入： 如果你使用 OBS 推流，LiveKit Ingress 节点会接收流并将其转码。
+    GStreamer 管道： Ingress 内部使用 GStreamer 将非 WebRTC 格式（如 RTMP）拆解，转换为符合 LiveKit 规范的 RTP 裸流。
+    Simulcast（联播）准备： 采集端会根据配置，同时编码出高、中、低三档分辨率（例如 1080p, 720p, 360p），为服务器的后续分发做准备。
+
+### 处理与逻辑层 (Processing & SFU Logic)
+
+  这是 LiveKit 服务器的核心，它不只是搬运工，更是“指挥官”。
+
+  SFU 转发逻辑： LiveKit Server 不会对媒体流进行重编码（除非是 Ingress），它通过 RTP 头部修改 快速转发包，延迟仅增加几毫秒。
+  丢包补偿 (NACK/RTX)： 服务器维护一个滑动窗口缓冲区。当订阅者反馈丢包（NACK）时，LiveKit 直接从自己的内存缓冲区中重传该包，而不需要请求原始发布者，极大缩短了修复时间。
+  带宽预估 (BWE)： 服务器实时监测每个订阅者的下行带宽。如果观众网速变慢，LiveKit 会自动切换 Simulcast 图层（例如从 720p 切到 360p），确保视频不卡顿。
+  序列号重写 (SN Rewriting)： 当服务器在不同图层间切换时，会实时修改 RTP 包的序列号和时间戳，使客户端解码器感知不到流的切换。
+
+### 传输阶段 (Transport & Signaling)
+
+加入服务器后，传输变得更加稳健和可控。
+
+信令交互 (WebSocket)： 所有的连接协商（SDP Offer/Answer）都通过 WebSocket 走专门的信令通道，而非 P2P 的私有协议。
+中转 (TURN/UDP/TCP)： * LiveKit 内置了 TURN 服务。如果用户在严格的企业内网，它会自动切换到 TLS 443 端口 封装 UDP 包进行传输，确保连接成功率接近 100%。
+分发网格 (Distributed Mesh)： 在大规模场景下，LiveKit 节点之间通过 Redis 协调。如果房间在 A 节点，而观众在 B 节点，A 会将媒体流通过内网高带宽链路转发给 B。
+
+
+### 渲染与播放 (Playback & Egress)
+
+最终画面在用户终端或录制服务中呈现。
+
+Jitter Buffer（客户端）： LiveKit SDK 接管了浏览器的缓冲区管理，根据服务器下发的网络状况动态调整缓冲深度。
+Egress（外部输出）：
+合成录制： 如果开启录制，LiveKit Egress 会启动一个 Headless Chrome，像真实用户一样订阅房间里的所有音视频轨道，渲染成画面后，再用 FFmpeg 压制成 MP4 或推向 Youtube。
+AI 代理接入 (Agents)： 如果房间里有 AI，AI 进程会作为特殊的“参与者”订阅音频轨道，通过 VAD (语音活跃检测) 提取有效片段，送入 STT/LLM 管道进行处理。
+
+### LiveKit 模式下的关键参数对比
+
+|阶段|传统 WebRTC (P2P)|LiveKit (SFU) 模式|
+|带宽消耗|随参与者增加指数增长|恒定（每个发布者仅推一份流）|
+|重传机制|终端对终端|服务器代理重传 (快得多)|
+|分辨率切换|几乎没有|动态 Simulcast 自动切换|
+|防火墙穿透|依赖第三方 STUN/TURN|内置 TLS 隧道支持|
