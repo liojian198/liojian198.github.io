@@ -49,3 +49,15 @@ date: 2026-01-05
   2. 加密层DTLS/SRTP负责密钥协商和媒体数据加密。
   3. 连接层ICE/STUN/TURN负责穿越 NAT，建立网络通路。
   4. 传输层UDPWebRTC 优先使用 UDP 以保证实时性。
+
+## WebRTC 线程模型
+
+  在 WebRTC 内部，通常有三个核心线程在打配合：
+
+  Signaling Thread (信令线程): 处理 API 调用和连接协商。
+
+  Worker Thread (工作线程): 负责数据的采集、转换、分发。
+
+  Network Thread (网络线程): 专门负责从 UDP 端口收发原始数据包。
+
+  这种多线程设计确保了即使视频编码很耗资源，也不会导致网络包接收出现延迟。
