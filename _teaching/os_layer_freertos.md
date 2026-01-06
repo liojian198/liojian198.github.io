@@ -7,19 +7,9 @@ permalink: /teaching/os_layer_freertos
 date: 2025-08-13 21:00:00
 ---
 
-# BSP,HAL，Driver，OS-Core
+# HAL，BSP,Driver，OS-Core
 
     FreeRTOS 也包含上述分层概念，但与 Linux 相比，它的实现方式更简单、更轻量级，因为它是一个专门为嵌入式系统设计的实时操作系统（RTOS）。
-
-## BSP (Board Support Package)
-
-    FreeRTOS 不包含一个通用的 BSP，但它严重依赖于一个。BSP 的功能在 FreeRTOS 中由 厂商提供的启动代码和初始化文件来完成。
-
-    启动文件：每个芯片厂商（例如 STMicroelectronics, NXP, Microchip）都会为他们的微控制器提供启动文件（通常是汇编代码）。这些文件负责在系统上电后进行基本的初始化，如设置堆栈指针、配置时钟、以及跳转到 C 语言的 main 函数。
-
-    平台初始化：开发者需要自己编写代码，在 main 函数的开头调用 FreeRTOS 启动前的硬件初始化函数。这些函数会配置外设，如 UART、SPI、GPIO 等，使其处于可用状态。这部分代码就是 BSP 的具体实现。
-
-    简而言之，BSP 是 FreeRTOS 运行的先决条件，但通常由开发者自己或芯片厂商提供，而不是 FreeRTOS 本身的一部分。
 
 ## HAL (Hardware Abstraction Layer)
 
@@ -30,6 +20,16 @@ date: 2025-08-13 21:00:00
     为什么需要 HAL？：HAL 的存在使得应用层代码（包括 FreeRTOS 任务）与具体硬件解耦。如果需要将项目从 STM32F4 迁移到 STM32H7，只需要替换 HAL 库，而不需要重写大量的驱动和应用代码。
 
     在 FreeRTOS 中，HAL 是可选的。开发者可以选择使用厂商提供的 HAL、自己编写一个 HAL，或者直接操作寄存器（这在追求性能的场景下很常见）。
+
+## BSP (Board Support Package)
+
+    FreeRTOS 不包含一个通用的 BSP，但它严重依赖于一个。BSP 的功能在 FreeRTOS 中由 厂商提供的启动代码和初始化文件来完成。
+
+    启动文件：每个芯片厂商（例如 STMicroelectronics, NXP, Microchip）都会为他们的微控制器提供启动文件（通常是汇编代码）。这些文件负责在系统上电后进行基本的初始化，如设置堆栈指针、配置时钟、以及跳转到 C 语言的 main 函数。
+
+    平台初始化：开发者需要自己编写代码，在 main 函数的开头调用 FreeRTOS 启动前的硬件初始化函数。这些函数会配置外设，如 UART、SPI、GPIO 等，使其处于可用状态。这部分代码就是 BSP 的具体实现。
+
+    简而言之，BSP 是 FreeRTOS 运行的先决条件，但通常由开发者自己或芯片厂商提供，而不是 FreeRTOS 本身的一部分。
 
 ## Driver (设备驱动程序)
 
