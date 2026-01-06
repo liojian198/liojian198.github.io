@@ -7,10 +7,13 @@ permalink: /teaching/os_layer_linux
 date: 2025-08-13 20:00:00
 ---
 
-# BSP,HAL，Driver，OS-Core
+# HAL，BSP,Driver，OS-Core
 
     Linux 也包含了上述这些层次，但它的架构有所不同，并且这些概念的命名和实现方式也与嵌入式系统略有差异。在 Linux 中，这些层次是高度模块化和动态的。
 
+## HAL (Hardware Abstraction Layer):
+
+    Linux 的 HAL 概念并不像嵌入式系统中那样有一个独立的、统一的 API 层。相反，它的硬件抽象被集成在内核的子系统中。
 
 ## Linux 中的 BSP、HAL、驱动和内核
 
@@ -27,10 +30,6 @@ date: 2025-08-13 20:00:00
 ### 设备树（Device Tree）：
 
     这是现代 Linux 内核在 ARM 和其他架构上管理硬件配置的核心机制。设备树文件（.dts）描述了板子上的所有硬件信息，比如有多少个 I2C 控制器、GPIO 在哪里、哪些中断线连接到哪个设备等等。这部分信息在启动时被解析，用来配置硬件和加载相应的驱动程序。可以把设备树看作是 Linux 的 BSP 配置数据。
-
-## HAL (Hardware Abstraction Layer):
-
-    Linux 的 HAL 概念并不像嵌入式系统中那样有一个独立的、统一的 API 层。相反，它的硬件抽象被集成在内核的子系统中。
 
 ### 子系统：
 
