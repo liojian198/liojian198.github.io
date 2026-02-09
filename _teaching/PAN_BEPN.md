@@ -18,6 +18,8 @@ date: 2026-02-09 16:19:00
     
     创新后的逻辑： mic-->PAN/BEPN-->ai-->tts-->SCO-->iphone-->应用
 
+    参考实现的芯片: https://doc.telink-semi.cn/doc/zh/software/res/sdk/802.15.4/802.15.4_sdk_user_guide_cn/?h=pan#_4
+
 # 蓝牙的组网链接方式
 
   BLEMESH
