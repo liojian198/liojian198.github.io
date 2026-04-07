@@ -12,6 +12,8 @@ date: 2026-01-05
   WebRTC（Web Real-Time Communication）是一项允许网络浏览器和移动应用进行实时音视频通信和通用数据传输的开源技术。它最大的意义在于：不需要安装任何插件或第三方软件，直接在浏览器端就能实现点对点（P2P）的高性能通信。
   这个大框架的东西真多啊。
 
+  参考资料: https://webrtc.org/ https://webrtc.org.cn/ https://codelabs.developers.google.com/codelabs/webrtc-web?hl=zh-cn#0 https://zhuanlan.zhihu.com/p/1933952603936528305 https://cloud.tencent.com/developer/article/2536695 https://github.com/Tinywan/WebRTC-tutorial
+
 # 相关描述
 
 ## WebRTC 的核心价值
