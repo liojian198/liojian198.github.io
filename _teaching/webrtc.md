@@ -337,3 +337,132 @@ WHIP：推流流程 (Ingestion)
   1. 推流端： 使用支持 WHIP 的编码器（如 OBS Studio, FFmpeg）推流到云端。
   2. 服务端 (SFU)： 接收 WHIP 流，不进行重编码，直接将数据包通过 WebRTC 转发。
   3. 播放端： 网页使用简单的 WHEP 播放器通过 HTTP URL 订阅该流。
+
+## 数据通道 --- SCTP
+
+  SCTP（Stream Control Transmission Protocol，流控制传输协议） 是 IETF 开发的一种可靠传输协议，最初设计用于在 IP 网络上传输电话信令。在 2026 年的今天，它已成为 WebRTC DataChannel、5G 核心网（NGAP） 以及高性能    实时通信的基石。
+
+  你可以把它理解为 “TCP 的可靠性 + UDP 的消息边界 + 独有的多流多宿主特性”。
+
+  Application Data -> SCTP -> DTLS -> UDP
+
+### SCTP 的四大核心特性
+
+  A. 多流 (Multi-streaming) —— 解决队头阻塞
+
+  TCP 只有一个流，如果其中一个数据包丢失，后续所有包都会卡在缓冲区等待重传（队头阻塞）。
+  SCTP 允许在一个“关联”中建立多个独立的逻辑流。如果流 #1 丢包，流 #2 的数据依然可以正常交付。这正是 LiveKit DataChannel 处理多传感器数据时效率极高的原因。
+
+  B. 多宿主 (Multi-homing) —— 故障透明转移
+
+  SCTP 关联的两个端点可以有多个 IP 地址。
+
+  高可用：如果主链路（网卡 A）断开，SCTP 会自动切换到备用链路（网卡 B），而不需要重新建立连接或更换端口。
+
+  场景：5G 基站连接核心网时，通常会通过不同的物理链路建立 SCTP 关联以防单点故障。
+
+  C. 四路握手 —— 防范安全攻击
+
+  TCP 的三次握手容易受到 SYN Flood 攻击（伪造源 IP 占满服务器半连接队列）。
+  SCTP 使用 四路握手 (Four-way handshake) 并在第二步返回一个 STATE COOKIE。服务器在收到客户端携带 Cookie 的 ACK 之前，不分配任何内存资源，彻底免疫了 SYN 类的拒绝服务攻击。
+
+  D. 面向消息 (Message-oriented)
+
+  TCP 是字节流，你发两个 100 字节的消息，接收方可能一次收到 200 字节，你需要自己处理分包（如 DaxPay 这种 HTTP 系统）。
+  SCTP 像 UDP 一样保留消息边界。如果你发 100 字节，对方收到的就是一个完整的 100 字节包，极大简化了硬件端（如 ESP32-P4）的解析逻辑。
+
+  3. SCTP 在 LiveKit 中的应用
+
+  在 LiveKit 中，SCTP 并不直接在公网跑（因为很多防火墙会拦截非 TCP/UDP 的协议），而是被 “隧道化” 了：
+
+  封装路径：Application Data -> SCTP -> DTLS -> UDP。
+
+  RPC 的本质：当你调用 LiveKit RPC 时，它利用了 SCTP 的 RELIABLE 模式（丢包重传）和 ORDERED 模式（按序交付）。
+
+  控制流：如果你在 ESP32 上发送高频姿态数据，可以关闭 SCTP 的可靠性，将其变为“不可靠流”，此时它就退化成了带有加密和 NAT 穿透能力的 UDP。
+
+## 音视频轨道 --- SRTP
+
+  RTP -> SRTP -> UDP 是 WebRTC 中专门为**实时音视频（Media）**设计的传输路径。它的核心逻辑是：在不可靠的 UDP 之上，提供一套极轻量级的、对时间极其敏感的加密传输协议。
+
+  1. RTP (Real-time Transport Protocol) —— 媒体的“户口本”
+     
+  当你采集到 ESP32-P4 麦克风的音频（OPUS）或摄像头的视频（H.264）后，数据首先被封装成 RTP 包。
+  
+  序列号 (Sequence Number)：记录包的顺序。如果 UDP 导致包乱序到达，接收端（如你的 AI Agent）可以通过它重新排好队。
+  
+  时间戳 (Timestamp)：这是音视频同步（播报对齐）的灵魂。它告诉接收端这个声音是在哪一毫秒发出的，从而解决网络抖动（Jitter）问题。
+  
+  同步源标识符 (SSRC)：标记这束流的身份。在一个 LiveKit 房间里，区分“你的声音”和“AI 的声音”全靠 SSRC。
+
+  2. SRTP (Secure Real-time Transport Protocol) —— 快速加密
+
+  RTP 本身是明文的。为了保护隐私，WebRTC 要求必须使用 SRTP。
+
+  关键差异：不同于 DataChannel 使用的 DTLS（全包加密），SRTP 只加密 RTP 的负载（Payload），而保留 RTP 的头部信息明文。
+  
+  为什么要这样做？ 这样中间的网络设备（如路由器或 LiveKit SFU）不需要解密就能看到序列号和 SSRC，从而快速决定如何转发数据，极大降低了延迟。
+  
+  密钥来源：SRTP 的密钥通常是在连接初始阶段通过 DTLS 握手 协商出来的（即 DTLS-SRTP 机制）。
+
+  3. UDP (User Datagram Protocol) —— 极速传输
+
+  音视频流对延迟的容忍度极低。
+
+  不重传策略：在 RTP -> SRTP 模式下，如果 UDP 丢了一个包，通常不会重传。
+  
+  逻辑：对于实时通话，补发 200ms 前的一个音频包是没有意义的，只会导致后续声音堆积。
+  
+  处理：接收端会使用 PLC（丢包补偿）技术，通过算法“猜”出丢失的那一小段声音。
+  
+  NAT 穿透：同样利用 UDP 的特性，配合 ICE 协议实现在 阿里云 服务器和家庭 ESP32 硬件之间的穿透。
+
+### 同步源标识符 (SSRC)
+
+  在 WebRTC 的实时传输协议（RTP）中，SSRC（Synchronization Source，同步源标识符） 是极其关键的 32 位随机标识符。你可以把它想象成媒体流在网络传输中的“数字身份证”。
+
+  由于你在研究 ESP32-P4 接入 LiveKit，深入理解 SSRC 能帮你解决诸如“为什么推流了服务器收不到”或“音画同步异常”等核心问题。SSRC 的主要作用如下：
+
+  1. 唯一流标识（Demultiplexing）
+  
+  这是 SSRC 最基础的功能。在一个 WebRTC 会话中，通常会有多条媒体流（例如：你的麦克风音频、摄像头视频、屏幕共享）。
+
+  作用：即使所有流都通过同一个 UDP 端口（使用 BUNDLE 技术）传输，接收端也能通过 RTP 头部中的 SSRC 瞬间分辨出：“这个包是音频流，那个包是视频流”。
+
+  开发注意：在 ESP32 上，如果你同时推音视频，必须为它们生成不同的 SSRC。
+
+  2. 定义同步基准（Timing Context）
+
+  RTP 包中的序列号（Sequence Number）和时间戳（Timestamp）并不是全局的，而是基于 SSRC 独立计算的。
+
+  作用：SSRC 为接收端提供了一个逻辑时钟上下文。接收端会为每个 SSRC 维护一个独立的抖动缓冲区（Jitter Buffer），根据该 SSRC 对应的时间戳来排列顺序并决定播放时间。
+
+  场景：如果 SSRC 突然改变，接收端会认为这是一个“全新的源”，从而清空旧的缓冲区，导致播放瞬间卡顿或重连。
+
+  3. 支持多流策略（Simulcast & SVC）
+
+  如果你在 ESP32-P4 上开启了联播（Simulcast），即同时发送“高清”和“标清”两路视频：
+
+  作用：这两路质量不同的视频实际上是两个独立的 RTP 流，拥有各自的 SSRC。LiveKit SFU 通过 SSRC 来决定下发哪路流给网络较差的用户。
+
+  4. 关键区别：SSRC vs CSRC
+
+  在调试 LiveKit 服务器日志时，你可能还会看到 CSRC（Contributing Source）：
+
+  SSRC：当前包的生成者（如：你的 ESP32）。
+
+  CSRC：如果经过了混音器（Mixer），这个包包含了多个人的声音。CSRC 列表会列出所有原始贡献者的 SSRC。
+
+
+  SSRC 冲突（Collision）：
+
+  SSRC 是随机生成的。虽然概率极低，但如果两个设备的 SSRC 撞车，LiveKit 会触发冲突检测流程。在嵌入式开发中，务必使用真随机数生成器（ESP32 的硬件 RNG）来生成 SSRC，不要硬编码。
+
+  SSRC 与 SDP 的映射：
+
+  在 WebRTC 建立连接时，SDP（会话描述协议）里会提前声明 SSRC（例如 a=ssrc:12345678 ...）。
+
+    常见错误：你在 ESP32 发出的 RTP 包 SSRC 与你在信令阶段（通过 WebSocket）告诉 LiveKit 的 SSRC 不一致。这会导致 LiveKit 虽然收到了 UDP 包，但因为找不到匹配的 SSRC 而直接丢弃。这也是你之前提到“卡在映射上面很久”的潜在原因。
+
+  RTCP 状态反馈：
+  SSRC 也是 RTCP 控制包的基础。接收端会针对特定的 SSRC 反馈丢包率和往返时延（RTT）。如果你发现 AI 说话断续，查看特定 SSRC 的 RTCP 统计是排查网络问题的核心手段。
