@@ -27,6 +27,8 @@ date: 2026-01-05 16:19:00
   目前开源的S2S模型有： moshi 模型， 我在mac上跑了下， 直接烫到不行了。
   其它的: Amazon Nova Sonic，Azure OpenAI Realtime API，Gemini Live API，OpenAI Realtime API， Ultravox Realtime，xAI Grok Voice Agent API
 
+  国内： https://help.aliyun.com/zh/model-studio/multimodal-products-overview?spm=a2c4g.11186623.help-menu-2400256.d_1_12_3_0.1c573386iF6dzo&scm=20140722.H_2922371._.OR_help-T_cn~zh-V_1
+
 ## 基于直播类型架构实现
 
   利用直播流到房间技术，chat ai 模拟一个客户端，进行ai处理，不仅限于聊天，ai视频机器人也是支持的，数字人，2D/3D模型也支持的。
