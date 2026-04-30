@@ -1,0 +1,18 @@
+---
+title: "VoIP 常见问题"
+collection: talks
+type: "talks"
+excerpt: ''
+permalink: /talks/VoIP_problem
+date: 2026-04-30
+toc: true # 启用目录
+toc_label: "aws 问题及解决方案" # 目录标题
+toc_sticky: true # 目录是否固定在侧边 (可选)
+---
+
+# 背景
+
+  最近在做ai语音陪聊，触达端是esp32，处理能力比较弱的设备。所以在做这块的时候， 也碰到了VoIP 领域相关问题， 真是一部一个坑啊， 要是pc端或者手机端，我们就直接上webrtc了，用现成的webrtc服务器，或许这些问题都遇不到。
+  其实ai语音聊天这个方向，不管是传统的架构方式还是多模型S2S模型，这些问题都是存在的，哈哈。
+
+# 
