@@ -107,5 +107,13 @@ AWS Lambda：短命鬼。单次请求的最大执行超时时间被死死限制�
   
   AWS Fargate：完全可控的纯粹容器。你可以利用 ECS 编排，在一个 Task（任务组）里同时塞进多个协作容器（Sidecar 模式，如一个跑 Pipecat 主程序，另一个跑 Nginx 反向代理）。Fargate 拥有更广阔的计算资源规格，并且在部分 Region 原生支持了英伟达 GPU 加速。
 
+### 为什么 Fargate 是 Serverless 部署 Pipecat 的完美肉身？
 
+将 Pipecat 打包成 Docker 镜像扔进 ECS + Fargate 运行：
+
+长连接完美维持：前端通过 WebRTC 或标准的 WebSocket 连进 Fargate，Fargate 内部的 Python 进程会死死拉住这根电话线，直到用户主动挂断。
+
+Actor 纵向丝滑流转：Pipecat 内部的 VAD 引擎、STT 消费者、LLM 接收者、TTS 播报者可以化身为 4 个完美的异步常驻 Task，在 Fargate 分配的独立内存空间里互锁运转。
+
+彻底免运维：虽然它像 ECS 服务器一样常驻，但当没有任何人打电话时，你可以通过配置把 ECS 的期望任务数（Desired Tasks）设为 0，此时 Fargate 彻底消失，AWS 不收你一分钱硬件闲置费。
 
