@@ -11,6 +11,8 @@ date: 2026-05-19 10:40:00
 
   Pipecat 的底层设计思想与 Actor 模型（Actor Model）高度契合，它在架构上可以说是 Actor 模型在实时流媒体（Real-time Streaming）领域的一种变体和落地实现。
 
+  管网资料: https://docs.pipecat.ai/pipecat/learn/overview
+
 # pipecat Actor 模型
 
   在传统的多线程编程中，处理实时音频（如网络接收、VAD 静音检测、LLM 大模型流式接收、TTS 语音合成、网络发送）通常需要共享内存。为了防止多个线程同时修改某段音频数据，必须引入锁（Locks / Mutex）。
