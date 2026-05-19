@@ -117,3 +117,10 @@ Actor 纵向丝滑流转：Pipecat 内部的 VAD 引擎、STT 消费者、LLM �
 
 彻底免运维：虽然它像 ECS 服务器一样常驻，但当没有任何人打电话时，你可以通过配置把 ECS 的期望任务数（Desired Tasks）设为 0，此时 Fargate 彻底消失，AWS 不收你一分钱硬件闲置费。
 
+## 6. Serverless 容器与ALB/NLB 的绑定
+
+  阿里云的 弹性伸缩（ESS） 服务天生支持两种实例类型：ECS（虚拟机）和 ECI（弹性容器实例）。
+
+  核心组件叫做 AWS Application Auto Scaling。当你把 ECS（大脑）、Fargate（肉身）、ALB（网关） 以及 Auto Scaling（呼吸阀） 四者绑定在一起时，你在控制台上用纯鼠标操作，就能直接实现“指标到线 $\rightarrow$ Fargate 自动扩容 $\rightarrow$ ALB 自动发现并挂载”的完全托管闭环。
+
+  
