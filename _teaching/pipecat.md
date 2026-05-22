@@ -160,11 +160,11 @@ date: 2026-05-19 10:40:00
 
 ``` text
 
-  ┌───► [ STT 处理器 ] ────► (产生文本帧 TextFrame) -----------------───┐
+                 ┌───► [ STT 处理器 ] ────► (产生文本帧 TextFrame)   ───┐
                  │                                                   ▼
 [ Transport 输入 ]                                             [ UserAggregator ]
                  │                                                   ▲
-                 └───► [ VAD 处理器 ] ────► (产生系统帧 SystemFrame) -─┘
+                 └───► [ VAD 处理器 ] ────► (产生系统帧 SystemFrame)   ─┘
 
 ```
 
