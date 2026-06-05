@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>RTOS时间片轮转机制——无水印超清版</title>
+    <style>
+        body { margin: 0; background: #1e1e2e; display: flex; flex-direction: column; align-items: center; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 20px; }
+        .btn { margin-bottom: 15px; padding: 12px 24px; background: #10b981; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 16px; box-shadow: 0 4px 6px rgba(0,0,0,0.2); transition: all 0.2s; }
+        .btn:hover { background: #059669; transform: translateY(-1px); }
+        canvas { box-shadow: 0 10px 30px rgba(0,0,0,0.5); border-radius: 8px; background: #fff; }
+    </style>
+</head>
+<body>
+    <button class="btn" onclick="downloadJPEG()">💾 点击立刻下载纯净无水印 JPEG 图片</button>
+    <canvas id="rtosCanvas" width="1200" height="800"></canvas>
+
+    <script>
+        const canvas = document.getElementById('rtosCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // ====== 1. 背景绘制 ======
+        const bgGrad = ctx.createLinearGradient(0, 0, 1200, 800);
+        bgGrad.addColorStop(0, '#f8fafc');
+        bgGrad.addColorStop(1, '#f1f5f9');
+        ctx.fillStyle = bgGrad;
+        ctx.fillRect(0, 0, 1200, 800);
+
+        // ====== 2. 顶部主标题栏 ======
+        ctx.fillStyle = '#1e3a8a';
+        ctx.beginPath();
+        ctx.roundRect(40, 30, 1120, 70, 12);
+        ctx.fill();
+
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 24px sans-serif';
+        ctx.fillText('机制三：时间片轮转调度机制 (Round-Robin) —— 同优先级任务均衡执行', 70, 74);
+        ctx.fillStyle = '#93c5fd';
+        ctx.font = '14px sans-serif';
+        ctx.fillText('内核源码深度解析版', 1010, 72);
+
+        // 核心导言
+        ctx.fillStyle = '#475569';
+        ctx.font = 'italic 16px sans-serif';
+        ctx.fillText('注：如果说优先级抢占是“高低分工”，那时间片轮转就是“同级平分”，专门解决多个相同优先级任务对 CPU 资源的均衡占用问题。', 45, 135);
+
+        // ====== 3. 左侧：双向循环链表模型 ======
+        ctx.fillStyle = '#ffffff';
+        ctx.strokeStyle = '#cbd5e1';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.roundRect(40, 160, 730, 340, 12);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.fillStyle = '#0f172a';
+        ctx.font = 'bold 16px sans-serif';
+        ctx.fillText('内核就绪任务链表管理模型 (Ready List - Same Priority)', 60, 195);
+
+        // 绘制 CPU 内核
+        ctx.fillStyle = '#e2e8f0';
+        ctx.strokeStyle = '#64748b';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.roundRect(355, 275, 100, 100, 12);
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = '#1e293b';
+        ctx.font = 'bold 20px sans-serif';
+        ctx.fillText('CPU', 387, 325);
+        ctx.font = '12px sans-serif';
+        ctx.fillStyle = '#64748b';
+        ctx.fillText('轮流执行', 383, 350);
+
+        // 绘制任务单元函数
+        function drawTask(x, y, name, status, color, bgColor, strokeColor, slice) {
+            ctx.fillStyle = bgColor;
+            ctx.strokeStyle = strokeColor;
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(x, y, 45, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.fillStyle = color;
+            ctx.font = 'bold 16px sans-serif';
+            ctx.fillText(name, x - 25, y - 5);
+            ctx.font = '11px sans-serif';
+            ctx.fillStyle = strokeColor;
+            ctx.fillText(status, x - 33, y + 15);
+
+            // 时间片标签
+            ctx.fillStyle = bgColor;
+            ctx.strokeStyle = strokeColor;
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.roundRect(x - 55, y + 60, 110, 24, 4);
+            ctx.fill();
+            ctx.stroke();
+            ctx.fillStyle = color;
+            ctx.font = '11px sans-serif';
+            ctx.fillText(slice, x - 42, y + 76);
+        }
+
+        drawTask(150, 270, '任务 A', 'TCB_A active', '#1e40af', '#dbeafe', '#2563eb', '时间片 1 (1ms)');
+        drawTask(660, 270, '任务 B', 'TCB_B ready', '#92400e', '#fef3c7', '#d97706', '时间片 2 (1ms)');
+        drawTask(405, 410, '任务 C', 'TCB_C ready', '#6b21a8', '#f3e8ff', '#7e22ce', '时间片 3 (1ms)');
+
+        // 绘制轮转链表指示
+        ctx.strokeStyle = '#94a3b8';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([4, 4]);
+        ctx.beginPath();
+        ctx.arc(405, 300, 180, -Math.PI * 0.8, -Math.PI * 0.2);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle = '#64748b';
+        ctx.font = '12px sans-serif';
+        ctx.fillText('pxNextTCB 指针链表轮转', 340, 230);
+
+        // ====== 4. 右侧：SysTick 驱动源 ======
+        ctx.fillStyle = '#fff1f2';
+        ctx.strokeStyle = '#fca5a5';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.roundRect(790, 160, 370, 340, 12);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.fillStyle = '#9f1239';
+        ctx.font = 'bold 16px sans-serif';
+        ctx.fillText('SysTick 系统时钟节拍核心配置', 810, 195);
+
+        // 时钟图标
+        ctx.strokeStyle = '#e11d48';
+        ctx.lineWidth = 3;
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(975, 260, 40, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(975, 260); ctx.lineTo(975, 235);
+        ctx.moveTo(975, 260); ctx.lineTo(995, 260);
+        ctx.stroke();
+
+        // 源码配置框
+        ctx.fillStyle = '#ffffff';
+        ctx.strokeStyle = '#fecdd3';
+        ctx.beginPath();
+        ctx.roundRect(810, 330, 330, 145, 8);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.fillStyle = '#b91c1c';
+        ctx.font = 'bold 13px monospace';
+        ctx.fillText('#define configTICK_RATE_HZ 1000', 825, 360);
+        ctx.fillStyle = '#4c0519';
+        ctx.font = '13px sans-serif';
+        ctx.fillText('• 硬件定时器每 1ms 触发一次 SysTick 中断', 825, 390);
+        ctx.fillText('• 1 个时钟节拍 (Tick) 即为一个标准时间片', 825, 415);
+        ctx.fillText('• 驱动内核计数器变量 xTickCount 持续自增', 825, 440);
+
+
+        // ====== 5. 核心原理摘要框 ======
+        ctx.fillStyle = '#eff6ff';
+        ctx.strokeStyle = '#bfdbfe';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.roundRect(40, 520, 1120, 85, 8);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.fillStyle = '#1d4ed8';
+        ctx.font = 'bold 15px sans-serif';
+        ctx.fillText('⭐ 核心底层原理：', 60, 550);
+        ctx.fillStyle = '#1e3a8a';
+        ctx.font = '14px sans-serif';
+        ctx.fillText('系统依靠硬件 SysTick 中断实现高频计时。当有多个同等最高优先级的任务处于就绪态时，内核调度器按就绪双向循环链表的顺序，分配等长的时间片。', 60, 575);
+        ctx.fillText('一旦当前运行任务的时间片耗尽，将强制触发上下文切换，移交 CPU 执行权，确保各同级任务公平、均衡地占用硬件资源。', 60, 595);
+
+
+        // ====== 6. 底部：任务切换完整过程流程链路 ======
+        ctx.fillStyle = '#0f172a';
+        ctx.font = 'bold 16px sans-serif';
+        ctx.fillText('调度时机与任务切换全过程：', 40, 650);
+
+        function drawStepCard(x, y, w, h, title, desc, code, isLast=false) {
+            ctx.fillStyle = isLast ? '#ecfdf5' : '#ffffff';
+            ctx.strokeStyle = isLast ? '#10b981' : '#cbd5e1';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.roundRect(x, y, w, h, 8);
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.fillStyle = isLast ? '#065f46' : '#0f172a';
+            ctx.font = 'bold 13px sans-serif';
+            ctx.fillText(title, x + 12, y + 25);
+            ctx.fillStyle = '#64748b';
+            ctx.font = '11px sans-serif';
+            ctx.fillText(desc, x + 12, y + 48);
+            ctx.fillStyle = isLast ? '#10b981' : '#2563eb';
+            ctx.font = '11px monospace';
+            ctx.fillText(code, x + 12, y + 68);
+
+            if (!isLast) {
+                // 绘制连接箭头
+                ctx.fillStyle = '#64748b';
+                ctx.beginPath();
+                ctx.moveTo(x + w + 5, y + h/2);
+                ctx.lineTo(x + w + 15, y + h/2);
+                ctx.lineTo(x + w + 15, y + h/2 - 4);
+                ctx.lineTo(x + w + 22, y + h/2);
+                ctx.lineTo(x + w + 15, y + h/2 + 4);
+                ctx.lineTo(x + w + 15, y + h/2);
+                ctx.fill();
+            }
+        }
+
+        drawStepCard(40, 670, 205, 85, '1. SysTick中断触发', '硬件定时器溢出，系统跳转', 'SysTick_Handler()');
+        drawStepCard(270, 670, 205, 85, '2. 时间片状态判定', '内核增加 Tick 计数并评估', 'xTaskIncrementTick()');
+        drawStepCard(500, 670, 205, 85, '3. 保存当前任务现场', '触发 PendSV，压栈核心寄存器', 'R0-R12, LR, PC, xPSR');
+        drawStepCard(730, 670, 205, 85, '4. 链表指针向后移位', '调度器切换当前任务指针', 'vTaskSwitchContext()');
+        drawStepCard(960, 670, 200, 85, '5. 恢复新任务现场', '出栈新寄存器，恢复运行', '✓ JPEG 格式无水印安全导出', true);
+
+        // ====== 导出 JPEG 函数 ======
+        function downloadJPEG() {
+            const dataURL = canvas.toDataURL('image/jpeg', 1.0); // 1.0 代表无损最高质量 JPEG
+            const link = document.createElement('a');
+            link.download = 'RTOS_时间片轮转核心原理架构图.jpeg';
+            link.href = dataURL;
+            link.click();
+        }
+    </script>
+</body>
+</html>

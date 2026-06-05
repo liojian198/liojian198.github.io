@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>RTOS 12大核心机制整体架构——无水印全细节版</title>
+    <style>
+        body { margin: 0; background: #1a1b26; display: flex; flex-direction: column; align-items: center; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 20px; }
+        .btn { margin-bottom: 15px; padding: 14px 28px; background: #10b981; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 16px; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3); transition: all 0.2s; }
+        .btn:hover { background: #059669; transform: translateY(-1px); box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4); }
+        canvas { box-shadow: 0 15px 40px rgba(0,0,0,0.6); border-radius: 12px; background: #fff; }
+    </style>
+</head>
+<body>
+    <button class="btn" onclick="downloadJPEG()">💾 点击立刻下载无水印高清 JPEG 图片</button>
+    <canvas id="rtosCanvas" width="1300" height="850"></canvas>
+
+    <script>
+        const canvas = document.getElementById('rtosCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // ====== 1. 全局背景 ======
+        ctx.fillStyle = '#f8fafc';
+        ctx.fillRect(0, 0, 1300, 850);
+
+        // 网格背景点缀
+        ctx.strokeStyle = 'rgba(226, 232, 240, 0.6)';
+        ctx.lineWidth = 1;
+        for (let i = 0; i < 1300; i += 40) {
+            ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, 850); ctx.stroke();
+        }
+        for (let j = 0; j < 850; j += 40) {
+            ctx.beginPath(); ctx.moveTo(0, j); ctx.lineTo(1300, j); ctx.stroke();
+        }
+
+        // ====== 2. 顶部大标题 ======
+        ctx.fillStyle = '#1e3a8a';
+        ctx.beginPath(); ctx.roundRect(40, 25, 1220, 65, 12); ctx.fill();
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 26px sans-serif';
+        ctx.fillText('🚀 RTOS 12大核心机制整体架构与运行体系', 70, 66);
+        ctx.fillStyle = '#93c5fd';
+        ctx.font = '14px sans-serif';
+        ctx.fillText('内核源码级体系化视图 • 无水印安全版', 1030, 62);
+
+        // ====== 3. 分层看板绘制函数 ======
+        function drawLayerBox(y, h, title, subTitle, color, bgColor, strokeColor) {
+            // 左侧侧边栏
+            ctx.fillStyle = color;
+            ctx.beginPath(); ctx.roundRect(40, y, 160, h, {tl:12, bl:12, tr:0, br:0}); ctx.fill();
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 20px sans-serif';
+            ctx.fillText(title, 55, y + h/2 - 10);
+            ctx.font = '12px sans-serif';
+            ctx.fillStyle = bgColor;
+            ctx.fillText(subTitle, 55, y + h/2 + 15);
+
+            // 右侧内容大背景
+            ctx.fillStyle = bgColor;
+            ctx.strokeStyle = strokeColor;
+            ctx.lineWidth = 2;
+            ctx.beginPath(); ctx.roundRect(200, y, 820, h, {tl:0, bl:0, tr:12, br:12}); ctx.fill(); ctx.stroke();
+        }
+
+        function drawMechanismCard(x, y, w, h, num, name, details, techCode, badgeColor) {
+            ctx.fillStyle = '#ffffff';
+            ctx.strokeStyle = '#e2e8f0';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath(); ctx.roundRect(x, y, w, h, 8); ctx.fill(); ctx.stroke();
+
+            // 编号气泡
+            ctx.fillStyle = badgeColor;
+            ctx.beginPath(); ctx.arc(x + 22, y + 22, 12, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 12px monospace';
+            ctx.fillText(num, x + 16, y + 26);
+
+            // 标题与细节
+            ctx.fillStyle = '#0f172a';
+            ctx.font = 'bold 15px sans-serif';
+            ctx.fillText(name, x + 42, y + 27);
+            
+            ctx.fillStyle = '#475569';
+            ctx.font = '12px sans-serif';
+            ctx.fillText(details, x + 15, y + 52);
+
+            ctx.fillStyle = '#2563eb';
+            ctx.font = '11px monospace';
+            ctx.fillText(techCode, x + 15, y + 74);
+        }
+
+        // ------ 第一优先级：基础核心 (必精通) ------
+        drawLayerBox(115, 205, '第一优先级', '基础核心，必精通', '#dc2626', '#fff5f5', '#fca5a5');
+        drawMechanismCard(220, 130, 185, 85, '1', '任务管理', '状态机转换、任务创建与删除', 'TCB_t, vTaskCreate', '#dc2626');
+        drawMechanismCard(420, 130, 185, 85, '2', '优先级抢占调度', '高优先级即刻强行剥夺CPU', 'vTaskSwitchContext', '#dc2626');
+        drawMechanismCard(620, 130, 185, 85, '3', '时间片轮转', '同级任务均衡平分CPU时间', 'configUSE_TIME_SLICING', '#dc2626');
+        drawMechanismCard(820, 130, 185, 85, '4', '中断管理', '硬件快进快出，异步事件触发', 'portBYTE_ALIGNMENT', '#dc2626');
+        
+        ctx.fillStyle = '#7f1d1d'; ctx.font = 'bold 13px sans-serif';
+        ctx.fillText('💡 底层根基：驱动内核运转与任务上下文切换（Context Switch）的硬件级核心。', 220, 300);
+
+        // ------ 第二优先级：通信同步 (项目刚需) ------
+        drawLayerBox(345, 245, '第二优先级', '通信同步, 项目刚需', '#d97706', '#fffbeb', '#fde68a');
+        drawMechanismCard(220, 360, 185, 85, '5', '二值信号量', '简单的同步互斥与事件通知', 'xSemaphoreGive', '#d97706');
+        drawMechanismCard(420, 360, 185, 85, '6', '计数信号量', '多资源实例管理与生产者消费者', 'xSemaphoreCreateCounting', '#d97706');
+        drawMechanismCard(620, 360, 185, 85, '7', '互斥量 (Mutex)', '带优先级继承，防止死锁与反转', 'xSemaphoreCreateMutex', '#d97706');
+        drawMechanismCard(820, 360, 185, 85, '8', '消息队列', '解耦任务间的多数据异步传递', 'xQueueSend / xQueueReceive', '#d97706');
+        drawMechanismCard(520, 460, 185, 85, '9', '事件标志组', '多事件逻辑组合同步(与/或关系)', 'xEventGroupWaitBits', '#d97706');
+
+        ctx.fillStyle = '#78350f'; ctx.font = 'bold 13px sans-serif';
+        ctx.fillText('💡 业务核心：90% 的多任务并发、资源锁竞争、跨任务数据流水线依靠这 5 种机制进行逻辑闭环。', 220, 570);
+
+        // ------ 第三优先级：进阶优化 (高阶必备) ------
+        drawLayerBox(615, 120, '第三优先级', '进阶优化, 高阶必备', '#16a34a', '#f0fdf4', '#bbf7d0');
+        drawMechanismCard(220, 630, 185, 85, '10', '软件定时器', '基于回调的单次/周期触发', 'xTimerCreate / xTimerStart', '#16a34a');
+        drawMechanismCard(420, 630, 185, 85, '11', '动态内存管理', '切片防碎片化的高效内存分配', 'pvPortMalloc / vPortFree', '#16a34a');
+        drawMechanismCard(620, 630, 185, 85, '12', '任务栈管理', '运行深度监控，溢出严格检测', 'vApplicationStackOverflowHook', '#16a34a');
+
+        // ====== 4. 右侧：专家学习建议看板 ======
+        ctx.fillStyle = '#f8fafc'; ctx.strokeStyle = '#3b82f6'; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.roundRect(1040, 115, 220, 620, 12); ctx.fill(); ctx.stroke();
+        
+        ctx.fillStyle = '#1e3a8a'; ctx.font = 'bold 16px sans-serif'; ctx.fillText('📋 专家进阶路线建议', 1055, 150);
+        
+        function drawCheckItem(y, text, boldText) {
+            ctx.fillStyle = '#3b82f6'; ctx.font = '16px sans-serif'; ctx.fillText('✔', 1060, y);
+            ctx.fillStyle = '#1e293b'; ctx.font = '13px sans-serif';
+            ctx.fillText(text, 1080, y);
+            ctx.fillStyle = '#2563eb'; ctx.font = 'bold 13px sans-serif';
+            ctx.fillText(boldText, 1080, y + 18);
+        }
+        drawCheckItem(190, '按优先级层级顺序学习', '稳扎稳打夯实内核原理解析');
+        drawCheckItem(260, '不要只流于应用 API', '死磕上下文切换汇编核心');
+        drawCheckItem(330, '结合硬件场景实践', '在复杂项目同步逻辑中 debug');
+        drawCheckItem(400, '防御性设计常态化', '严防死锁、栈溢出、堆碎片');
+
+        // 右下角硬核提示（代替了原本公众号水印，更加精美干净）
+        ctx.fillStyle = '#eff6ff'; ctx.strokeStyle = '#bfdbfe';
+        ctx.beginPath(); ctx.roundRect(1050, 485, 200, 235, 8); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = '#1e40af'; ctx.font = 'bold 13px sans-serif';
+        ctx.fillText('🛡️ 内核进阶避坑金律', 1065, 515);
+        ctx.fillStyle = '#475569'; ctx.font = '12px sans-serif';
+        ctx.fillText('• 互斥量绝不能在中断中用', 1065, 545);
+        ctx.fillText('• 频繁动态分配容易堆碎片', 1065, 570);
+        ctx.fillText('• 复杂同步优先用事件组', 1065, 595);
+        ctx.fillStyle = '#10b981'; ctx.font = 'bold 12px sans-serif';
+        ctx.fillText('✓ 生产环境全面去水印验证', 1065, 630);
+
+        // ====== 5. 底部：学习成长曲线阶段流 ======
+        ctx.fillStyle = '#1e293b'; ctx.font = 'bold 15px sans-serif';
+        ctx.fillText('⚙️ 开发者核心成长链路：', 40, 770);
+
+        function drawProgressNode(x, stage, skill, desc) {
+            ctx.fillStyle = '#334155'; ctx.font = 'bold 14px sans-serif'; ctx.fillText(stage, x, 800);
+            ctx.fillStyle = '#0f172a'; ctx.font = 'bold 13px sans-serif'; ctx.fillText(skill, x, 820);
+            ctx.fillStyle = '#64748b'; ctx.font = '11px sans-serif'; ctx.fillText(desc, x, 838);
+            
+            if(x < 800) {
+                ctx.fillStyle = '#94a3b8'; ctx.font = '16px sans-serif'; ctx.fillText('➔', x + 190, 815);
+            }
+        }
+        drawProgressNode(40, '第一阶段：夯实地基', '【会熟练调用 API】', '能写常规多任务应用代码');
+        drawProgressNode(300, '第二阶段：探究机制', '【吃透双向链表与锁】', '不惧复杂的临界区死锁追查');
+        drawProgressNode(560, '第三阶段：进阶优化', '【具备防御性架构思维】', '精通内存防碎片与栈边界监控');
+        drawProgressNode(820, '第四阶段：彻底打通', '【信手拈来商业级落地】', '多任务高并发项目稳健无死锁');
+
+        // ====== 6. 导出 JPEG 函数 ======
+        function downloadJPEG() {
+            // 1.0 代表无损最高画质的 JPEG 压缩率
+            const dataURL = canvas.toDataURL('image/jpeg', 1.0); 
+            const link = document.createElement('a');
+            link.download = 'RTOS_12大核心机制整体架构图_高清无水印.jpeg';
+            link.href = dataURL;
+            link.click();
+        }
+    </script>
+</body>
+</html>
