@@ -16,3 +16,13 @@ date: 2026-07-02 14:30:00
 
      https://github.com/surrealdb
 
+rust 相关的东西也记录下吧
+
+    https://doc.rust-lang.org/book/ch20-01-unsafe-rust.html#using-extern-functions-to-call-external-code
+
+    https://docs.rust-embedded.org/book/interoperability/index.html
+
+    https://rust-lang.github.io/rust-bindgen/
+
+    https://michael-f-bryan.github.io/rust-ffi-guide/
+
