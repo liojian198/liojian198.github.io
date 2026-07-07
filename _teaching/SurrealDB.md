@@ -209,6 +209,85 @@ FETCH 不是 JOIN：它不参与 WHERE 或 GROUP 的逻辑。它发生在数据�
 
 行级权限，列级权限，基于操作层级的权限，基于关系的图遍历权限，基于环境上下文的权限，命名空间与数据库级权限，存储过程中的逻辑权限
 
+### SurrealDB 的身份验证系统 (Authentication) 详解
+
+  SurrealDB 的身份验证系统设计得非常精妙，它将数据库层面的鉴权（Authentication）与业务逻辑层面的授权（Authorization）紧密结合在一起。
+
+其核心在于通过 SCOPE（作用域）和 TOKEN（令牌）将用户的身份信息（Context）注入到数据库的运行上下文中。
+
+1. 核心架构：Scope 与 Token
+SurrealDB 不依赖外部中间件来处理权限，而是通过两种方式定义谁可以登录：
+
+SCOPE (登录逻辑): 适用于数据库原生的登录流程（类似传统 Session）。你定义 SIGNIN 时如何查询用户、如何验证密码，以及登录后会话包含哪些数据。
+
+TOKEN (令牌校验): 适用于前后端分离场景（JWT）。你定义如何解析外部颁发的 JWT，并将其中的 Claim 映射为数据库变量。
+
+
+2. 用户登录流 (SIGNIN)
+当你调用 SIGNIN 时，SurrealDB 内部执行以下操作：
+
+验证身份：执行 SIGNIN 中定义的查询（如比对密码 crypto::argon2::compare）。
+
+创建上下文：如果验证成功，数据库会创建一个会话，并生成一个会话 ID 或 Token。
+
+变量注入 ($auth)：这是最关键的一步。数据库将该用户的记录数据加载到内存中，并将其赋值给全局变量 $auth。
+
+比如，如果登录用户是 person:alice，那么所有引用 $auth 的地方都会自动指向 Alice 的记录数据。
+
+3. 定义身份与权限映射
+下面是一个完整的 SCOPE 配置示例，展示了如何构建身份上下文：
+
+```text
+
+-- 定义一个用于用户登录的作用域
+DEFINE SCOPE account SESSION 24h
+    -- 登录时执行的 SQL，用于校验密码
+    SIGNIN (
+        SELECT * FROM person 
+        WHERE email = $email 
+        AND crypto::argon2::compare(password, $pass)
+    )
+    -- 登录成功后，用户记录会被注入到 $auth
+    -- $auth 的内容直接决定了后续 PERMISSIONS 的过滤效果
+    SESSION (
+        RETURN $auth;
+    );
+
+```
+
+4. 权限与身份的联动 (The Magic of $auth)
+   
+一旦用户通过上述 SCOPE 登录，他们在执行任何 SELECT, UPDATE 等操作时，SurrealDB 都会自动读取当前连接的 $auth 变量。
+
+这就实现了“一行代码实现所有权限”的奇迹：
+
+``` text
+
+DEFINE TABLE document SCHEMAFULL
+    PERMISSIONS
+        -- 这里的 $auth.tenant 和 $auth.id 是由 SIGNIN 阶段自动注入的
+        FOR select WHERE tenant = $auth.tenant;
+
+```
+
+关键点：如何使用 JWT 实现外部鉴权？
+如果你的系统使用了 Auth0、Firebase 或自建的 Node.js/Go 服务颁发 JWT，你可以直接在 SurrealDB 中配置 DEFINE TOKEN：
+
+``` text
+
+DEFINE TOKEN login_token ON NAMESPACE TYPE HS256 VALUE "my-secret-key" 
+    -- 解析 JWT 中的声明（Claim）并赋予 $auth
+    CLAIM "tenant" AS tenant;
+
+```
+
+
+这样，即使你的用户不是在数据库内登录的，只要带着合法的 JWT 过来，SurrealDB 就能提取出 tenant 放入 $auth.tenant，实现 RLS 过滤。
+
+
+
+
+
 ### 行级权限
 
   当你定义 FOR update WHERE $auth.role = 'admin' 或 FOR delete WHERE created_by = $auth.id ... 时，你不是在控制“谁能访问 product 表”，而是在控制“谁能对表中的哪一行记录执行什么操作”。
@@ -301,6 +380,68 @@ $this：指代当前正在被扫描的那一行记录。
 
 
 谨慎使用 FULL 权限：在开发阶段可以使用 PERMISSIONS FULL，但生产环境请务必将权限细化到每一类操作（select, create, update, delete）。
+
+
+#### $auth 怎么获得？
+
+  这个过程通常分为三个步骤：
+
+  1. 定义 Scope (登录作用域)
+在定义 SCOPE 时，你可以指定登录成功后 SESSION 中包含什么内容。
+
+```text
+
+DEFINE SCOPE user SESSION 30m
+    -- 在登录时进行校验
+    SIGNIN (
+        SELECT * FROM person 
+        WHERE email = $email AND crypto::argon2::compare(password, $pass)
+    )
+    -- 关键点：这里定义了 $auth 变量的内容
+    SESSION (
+        -- 这里你可以手动映射用户信息到 session
+        -- 数据库会自动将当前登录的 person 记录信息放入 $auth
+        RETURN $auth; 
+    );
+
+```
+
+2. 用户登录 (SIGNIN)
+当你调用 SIGNIN 时，数据库会通过 SCOPE 的逻辑验证用户。一旦通过，数据库会创建一个会话，并自动将该用户记录的所有字段（包括 tenant 字段）加载到 $auth 变量中。
+
+```text
+
+-- 登录后，Alice 的记录信息（包含 tenant 字段）会被存入当前连接的上下文中
+SIGNIN SCOPE user {
+    email: "alice@example.com",
+    pass: "password123"
+};
+
+```
+
+
+3. 变量注入
+登录成功后，无论你执行什么查询，SurrealDB 引擎内部都会自动将该会话中的用户信息映射为 $auth 对象。
+
+如果你的 person 表里有一个字段叫 tenant，那么登录后：
+
+$auth.tenant 就等于该用户的 tenant 字段值（例如 tenant:company_a）。
+
+4. 如何确保 $auth.tenant 始终可用？
+   
+为了保证权限逻辑不出错，你需要遵循以下最佳实践：
+
+1. 确保用户记录包含租户信息：在 person 表中，必须有一个 tenant 字段。
+2. 通过 JWT 或 Session 传递：如果你使用外部的 JWT，你需要在数据库的 TOKEN 配置中解析出 tenant 声明，并将其赋值给 $auth。
+3.调试方式：你可以在控制台登录后，直接运行以下语句查看 $auth 里到底存了什么：如果返回的 JSON 中不包含 tenant，那么 $auth.tenant 自然就是 NONE，导致权限过滤失败。
+
+
+
+
+
+
+
+
 
 
 
