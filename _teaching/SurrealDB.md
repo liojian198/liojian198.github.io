@@ -284,7 +284,9 @@ DEFINE TOKEN login_token ON NAMESPACE TYPE HS256 VALUE "my-secret-key"
 
 这样，即使你的用户不是在数据库内登录的，只要带着合法的 JWT 过来，SurrealDB 就能提取出 tenant 放入 $auth.tenant，实现 RLS 过滤。
 
+SurrealDB 身份验证的本质是：身份记录 (Record) -> 内存上下文 ($auth) -> 内核权限规则 (PERMISSIONS)。
 
+这种设计消除了“鉴权”与“查询”之间的断层，极大地降低了代码量。你现在是准备使用内置的 SCOPE 来管理登录，还是打算通过外部的 JWT 令牌与 SurrealDB 进行集成？这决定了你如何配置 DEFINE TOKEN 或 DEFINE SCOPE。
 
 
 
@@ -435,7 +437,70 @@ $auth.tenant 就等于该用户的 tenant 字段值（例如 tenant:company_a）
 2. 通过 JWT 或 Session 传递：如果你使用外部的 JWT，你需要在数据库的 TOKEN 配置中解析出 tenant 声明，并将其赋值给 $auth。
 3.调试方式：你可以在控制台登录后，直接运行以下语句查看 $auth 里到底存了什么：如果返回的 JSON 中不包含 tenant，那么 $auth.tenant 自然就是 NONE，导致权限过滤失败。
 
+### 列级权限
 
+  在 SurrealDB 中，原生意义上的“列级权限”（即直接限制用户只能 SELECT 某张表中的特定列，而不能查询其他列）并不像在传统关系型数据库（如 SQL Server/Oracle）那样通过 GRANT SELECT(column_name) 来实现。
+
+但是，SurrealDB 提供了更现代、更灵活的方案来实现同样的效果。
+
+1. 核心机制：通过 PERMISSIONS 控制字段访问
+   
+SurrealDB 允许你在字段定义（DEFINE FIELD）中直接设置 PERMISSIONS。这意味着权限不仅仅作用于“行”，还可以作用于“列”。
+
+示例：敏感字段保护
+如果你有一个 person 表，但只想让非管理员用户看到 name，而隐藏 salary：
+
+``` text
+
+-- 1. 普通字段，所有人可读
+DEFINE FIELD name ON TABLE person TYPE string 
+    PERMISSIONS FOR select WHERE true;
+
+-- 2. 敏感字段，只有 admin 或本人可读
+DEFINE FIELD salary ON TABLE person TYPE float 
+    PERMISSIONS FOR select WHERE $auth.role = 'admin' OR $auth.id = $this.id;
+
+```
+
+效果：
+当普通用户执行 SELECT * FROM person 时，SurrealDB 会自动过滤掉 salary 字段。返回的 JSON 中将完全不包含 salary 键。
+
+
+2. 更高级的控制：VALUE 和 ASSERT
+
+  除了权限控制，你还可以结合 VALUE 和 ASSERT 来限制数据写入时的“列权限”：
+
+  READ 权限：通过 PERMISSIONS 控制谁能看见该列。
+
+  WRITE 权限：通过 FOR create 和 FOR update 结合 PERMISSIONS 控制谁能修改该列。
+
+``` text
+
+-- 只有管理员能修改 salary
+DEFINE FIELD salary ON TABLE person TYPE float
+    PERMISSIONS 
+        FOR select WHERE $auth.role = 'admin' OR $auth.id = $this.id
+        FOR update WHERE $auth.role = 'admin';
+
+```
+
+3. 为什么要这样设计？
+   
+SurrealDB 不采用 GRANT 权限语法的原因在于其面向文档和图的灵活性：
+
+细粒度合一：在 SurrealDB 中，行权限和列权限在同一个 PERMISSIONS 语法框架下，不需要学习两套不同的指令。
+
+安全性闭环：因为所有的控制逻辑都在 DEFINE FIELD 中，无论你查询整个表还是关联查询（Join），这些逻辑永远伴随着数据字段。
+
+适应文档型存储：在文档型数据库中，某些记录可能根本没有某个字段。传统 SQL 的列权限在处理“稀疏矩阵”时很吃力，而 SurrealDB 的 PERMISSIONS 是针对数据存在的逻辑，更加直观。
+
+4. 总结建议
+   
+如果你想隐藏字段：在 DEFINE FIELD 中设置 PERMISSIONS FOR select。
+
+如果你想阻止修改字段：在 DEFINE FIELD 中设置 PERMISSIONS FOR update。
+
+如果你想进行复杂的列权限管理：记得给涉及权限判断的字段（如 $auth.role 所属的表）做好索引，以保证在大量字段权限判定时的查询效率。
 
 
 
