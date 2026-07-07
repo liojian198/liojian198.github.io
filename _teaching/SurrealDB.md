@@ -205,6 +205,116 @@ FETCH 不是 JOIN：它不参与 WHERE 或 GROUP 的逻辑。它发生在数据�
 
 利用 FETCH 代替子查询：如果你在 SELECT 里写子查询是为了获取关联对象详情，请改用 FETCH，因为 FETCH 是在所有过滤和分页完成之后才执行的，开销极小。
 
+## 权限控制
+
+行级权限，列级权限，基于操作层级的权限，基于关系的图遍历权限，基于环境上下文的权限，命名空间与数据库级权限，存储过程中的逻辑权限
+
+### 行级权限
+
+  当你定义 FOR update WHERE $auth.role = 'admin' 或 FOR delete WHERE created_by = $auth.id ... 时，你不是在控制“谁能访问 product 表”，而是在控制“谁能对表中的哪一行记录执行什么操作”。
+
+为什么说这是记录级的？
+动态求值：当用户尝试对某一行 product:123 执行 DELETE 时，SurrealDB 引擎会取出该记录的 created_by 字段，并与当前用户 $auth.id 进行动态比较。
+
+查询过滤 (SELECT)：如果你有 FOR select WHERE tenant = $auth.tenant，那么当用户查询该表时，数据库会自动给查询加上一个“隐形过滤器”。如果用户没有权限看到某一行，那一行数据根本不会出现在查询结果中——就像它在数据库中不存在一样。
+
+内核强制性：这种权限逻辑嵌入在数据访问层，无论你通过何种方式（API、控制台、代码）调用，只要涉及该表，规则就会被触发。
+
+#### RLS 怎么建表
+
+在 SurrealDB 中，构建支持记录级权限（RLS）的表结构，核心在于将权限逻辑内嵌到 DEFINE TABLE 语句中。
+
+以下是实现 RLS 的标准化步骤和最佳实践代码。
+
+1. 建立带有 RLS 的表结构
+在定义表时，你可以通过 PERMISSIONS 子句明确定义不同操作的访问规则。
+
+```text
+
+  -- 1. 定义资源表 (以 product 为例)
+DEFINE TABLE product SCHEMAFULL
+    -- 2. 设置权限策略
+    PERMISSIONS
+        -- 所有人都可以查询该表（或根据需要添加 WHERE 条件）
+        FOR select WHERE true
+        
+        -- 只有记录的创建者或具备 'admin' 角色的用户才能执行更新
+        FOR update WHERE created_by = $auth.id OR $auth.role = 'admin'
+        
+        -- 只有管理员可以删除
+        FOR delete WHERE $auth.role = 'admin'
+        
+        -- 只有通过身份验证的用户才能创建记录
+        FOR create WHERE $auth.id != NONE;
+
+-- 3. 定义字段，特别是关联用户的标识符
+DEFINE FIELD name ON TABLE product TYPE string;
+DEFINE FIELD created_by ON TABLE product TYPE record<person> DEFAULT $auth.id;
+DEFINE FIELD tenant ON TABLE product TYPE record<tenant>;
+
+```
+
+2. 多租户隔离 (更高级的 RLS)
+在企业级应用中，最常见的需求是“租户隔离”，即用户只能看到属于自己公司（tenant）的数据。
+
+```text
+
+  DEFINE TABLE order SCHEMAFULL
+    PERMISSIONS
+        -- 强制过滤：任何操作都必须匹配用户的 tenant
+        FOR select, update, delete WHERE tenant = $auth.tenant;
+
+DEFINE FIELD tenant ON TABLE order TYPE record<tenant>;
+
+```
+
+
+3. 如何设置 RLS 的测试环境？
+RLS 只有在用户登录（SIGNIN）并拥有 $auth 上下文时才会生效。
+
+第一步：定义权限访问范围
+你需要确保用户在登录时，Token 中包含了正确的属性（如 role, tenant）。
+
+第二步：在查询中测试
+当你在控制台或代码中操作时，通过 SIGNIN 模拟不同用户：
+
+```text
+
+-- 模拟用户登录
+SIGNIN person:alice PASSWORD 'password123' SCOPE user;
+
+-- 此时执行 SELECT，数据库会自动根据定义的 WHERE 条件过滤数据
+SELECT * FROM product;
+
+```
+
+4. RLS 设计的 3 个关键原则
+使用 $auth 和 $this：
+
+$auth：指代当前登录的用户对象。
+
+$this：指代当前正在被扫描的那一行记录。
+
+通过 WHERE created_by = $auth.id 这种逻辑，你实际上是在给每一行记录“贴上标签”。
+
+确保性能：由于 RLS 会在每次访问时触发，请务必为你用于权限过滤的字段建立索引。
+
+
+谨慎使用 FULL 权限：在开发阶段可以使用 PERMISSIONS FULL，但生产环境请务必将权限细化到每一类操作（select, create, update, delete）。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
