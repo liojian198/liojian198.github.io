@@ -502,9 +502,94 @@ SurrealDB 不采用 GRANT 权限语法的原因在于其面向文档和图的灵
 
 如果你想进行复杂的列权限管理：记得给涉及权限判断的字段（如 $auth.role 所属的表）做好索引，以保证在大量字段权限判定时的查询效率。
 
+### 基于操作层级的权限 (Action-Level)
+
+  除了 select, update, delete, create，你还可以通过 DEFINE TABLE 或 DEFINE FIELD 细化权限到具体的业务操作。
+
+场景：用户可以“读取”订单，但不能“确认”订单（确认订单本身可以是一个特殊操作）。
+
+实现：你可以通过在 can 关系表（你之前定义的）中定义自定义的 action 字符串（如 'approve', 'archive'），然后在业务逻辑中使用这些自定义权限值进行过滤。
+
+### 基于关系的图遍历权限 (Relationship-Based Access Control / ReBAC)
+
+  这是 SurrealDB 的杀手锏。你不仅可以看记录本身，还可以看“它和谁有关系”。
+
+场景：只有当 user 属于 department，且 department 关联了 resource 时，用户才有权访问。
+
+实现：
 
 
+``` text
 
+DEFINE TABLE product SCHEMAFULL
+    PERMISSIONS
+        FOR select WHERE id IN (
+            -- 通过图遍历：用户 -> 部门 -> 产品
+            SELECT out FROM department_has_product 
+            WHERE in.department IN (SELECT department FROM person:$auth.id)
+        );
+
+```
+
+### 基于环境上下文的权限 (Context-Based Access Control)
+
+SurrealDB 允许你在权限规则中加入环境感知条件，例如时间、IP、连接来源等。
+
+场景：只允许在办公时间内访问敏感数据。
+
+实现：
+
+``` text
+
+DEFINE TABLE sensitive_data SCHEMAFULL
+    PERMISSIONS
+        -- 使用 time::now() 获取服务器当前时间
+        FOR select WHERE time::hour(time::now()) >= 9 AND time::hour(time::now()) <= 18;
+
+```
+
+### 命名空间与数据库级权限 (Namespace & Database Level)
+
+这是最顶层的控制，属于“门禁”级别。在定义 DEFINE ACCESS 或 DEFINE TOKEN 时，你可以限定该 Token 只能访问特定的 Database。
+
+实现：
+
+``` text
+
+  -- 限制 Token 仅在特定 Database 内生效
+DEFINE ACCESS api_access ON DATABASE my_db TYPE JWT 
+    WITH ISSUER 'https://my-auth-provider.com'
+    -- 甚至可以进一步限制其能力
+    FOR SELECT, CREATE;
+
+```
+
+
+### 存储过程中的逻辑权限 (Procedural Access Control)
+
+  你可以通过 DEFINE FUNCTION 将复杂的权限计算逻辑封装起来，在 PERMISSIONS 中调用函数。
+
+优势：将复杂的“黑盒”逻辑（如多重 ABAC 属性判断）隐藏在函数内部，使表定义更简洁。
+
+``` text
+
+DEFINE FUNCTION fn::check_complex_permission($user_id, $resource_id) {
+    -- 在这里执行多重查询逻辑
+    RETURN (SELECT count() FROM ...)[0].count > 0;
+};
+
+DEFINE TABLE product PERMISSIONS
+    FOR select WHERE fn::check_complex_permission($auth.id, id);
+
+```
+
+### 你应该如何选择？
+
+简单应用：使用 PERMISSIONS + WHERE（行级/列级）。
+
+多租户 SaaS：使用 tenant 字段 + 行级过滤。
+
+复杂协作系统：使用 RELATE 建立权限图谱，利用图遍历进行权限校验（ReBAC）。
 
 
 
