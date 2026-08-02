@@ -30,6 +30,8 @@ date: 2026-08-03 04:30:00
 java： jsr
 
 rust： https://rust-lang.github.io/rfcs/， https://rustc-dev-guide.rust-lang.org/overview.html
+      https://rustc-dev-guide.rust-lang.org/， https://doc.rust-lang.org/reference/， https://doc.rust-lang.org/book/ch04-01-what-is-ownership.html
+
 
 go： https://github.com/golang/proposal#readme
 
