@@ -141,6 +141,7 @@ date: 2026-08-03 21:30:00
 
   webrtc sfu 服务器的开发 https://pulsebeam.dev/blog/moving-to-thread-per-core
   游戏：bevy
+  java： Affinity
 
 
 
