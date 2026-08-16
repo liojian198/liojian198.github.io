@@ -80,6 +80,9 @@ date: 2026-08-17 02:48:00
   如果说传统的物联网（IoT）是让各种设备连上互联网，那么 Web of Things（WoT） 就是把万维网（WWW）的成功理念（如 URL、统一接口、超链接、语义化）直接应用到物理世界中，让每一个物理或虚拟设备都变成互联网上可被轻松调用、理解和组合的“网页/服务”。
 
   规范： https://www.w3.org/TR/wot-thing-description-2.0/ 真尼玛复杂
+  https://github.com/w3c/wot-thing-description
+
+  https://www.w3.org/TR/wot-thing-description11/
   
 
 ## 为什么需要 W3C WoT？（解决痛点）
