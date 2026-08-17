@@ -123,3 +123,34 @@ E (84984) coreMQTT: MQTT connection failed with status = MQTTRecvFailed.
 I (84994) core_mqtt_agent_manager: Session present: 0
 
 ```
+
+
+
+### aws cloud formations
+
+AWS CloudFormation  
+
+AWS 原生，
+1. 完全免费（只收底层被创建的云资源费用）。
+2. AWS 一有新功能，CloudFormation 100% 同步支持。
+3. 自带强大的状态管理和自动回滚。
+
+Terraform (HashiCorp)
+
+https://developer.hashicorp.com/tutorials
+
+AWS CDK
+
+现代云开发框架
+
+用真正的编程语言（TypeScript, Python, Java 等）来写 AWS 架构，底层会自动编译成 CloudFormation 模板去执行。
+
+Serverless Framework
+
+专注于构建、打包和部署 Serverless 应用
+
+高（应用级抽象）：封装了大量最佳实践，自动处理依赖
+
+多云支持（AWS、Google Cloud、Azure 等，虽以 AWS 最成熟）
+
+提供优秀的本地模拟（sls invoke local）和热重载插件生态
