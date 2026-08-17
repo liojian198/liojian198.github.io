@@ -127,3 +127,72 @@ for(int i = 0; i < 32; i++) {
 
 ```
 
+# aws IOT 批量设备通信安全处理
+
+  aws fleet provisioning
+
+  AWS IoT Fleet Provisioning（舰队批量配置/自动上线服务） 是 AWS IoT Core 提供的一项核心功能，旨在解决物联网设备在大规模量产和部署时的数字身份安全注入与云端注册难题。  在传统的物联网项目中，为成千上万台设备手动烧录独一无二的 X.509 证书、私钥并在云端注册（Thing、Policy、Groups）是一场工程噩梦。Fleet Provisioning 实现了这一过程的完全自动化。
+
+##  Fleet Provisioning 解决了什么痛点？
+
+      避免产线证书管理混乱： 过去需要在工厂产线为每台设备烧录不同的唯一证书，稍有不慎就会导致证书重复或泄露。
+      零接触部署（Zero-Touch Provisioning）： 设备在出厂时只需要烧录一个通用的“认领证书（Claim Certificate / Bootstrap Certificate）”。
+      当设备第一次联网时，它会自动向云端申请属于自己的唯一生产证书和设备身份。
+      安全与权限解耦： 限制通用的 Claim 证书权限，使其只能访问注册相关的特定 MQTT 主题，防止安全漏洞。  
+
+## 核心工作流程（以“Claim 认领机制”为例）
+
+  当一台全新的设备第一次通电联网时，整个自动注册流程如下：
+
+### 1.引导连接（Bootstrap Connection）：
+
+  设备使用内置的 Claim 证书（一个所有同类设备可共用的临时低权限证书）连接到 AWS IoT Core。
+
+  该 Claim 证书关联的 IoT 策略（Policy）极其严格，只能用于执行 Fleet Provisioning 相关的 API 话题。
+
+### 2.提交参数与凭证申请：
+
+  设备通过 MQTT 向 AWS 发送请求，附带自身的硬件唯一标识（如序列号、MAC 地址、或通过 CSR 密钥签名请求）。
+
+### 3.Lambda 钩子验证（Pre-provisioning Hook）：
+
+    AWS 收到请求后，会触发一个 AWS Lambda 函数。
+
+    你可以在该 Lambda 中编写业务逻辑：去数据库（如 DynamoDB）核对设备的序列号是否合法。如果合法，允许注册；如果是伪造设备，直接拒绝。
+
+### 4.自动创建云端资源（Provisioning Template）：  
+
+      验证通过后，AWS 根据预先定义好的 Provisioning Template（配置模板） 
+      自动在云端执行以下操作：为该设备生成或注册一个唯一的 X.509 生产证书。 
+      在 AWS IoT 注册表中创建 Thing（物模型实体）。 
+      将 Thing 自动分配到指定的 Thing Groups（设备分组）。 
+      绑定正式的高权限生产策略（Production Policy）。
+
+### 5. 凭证下发与切换：
+
+  AWS IoT 将新生成的证书、私钥以及“所有权证明令牌”通过 MQTT 下发给设备。
+
+  设备安全地将新证书保存在本地（如 Secure Element / Flash 安全区）。
+
+  设备断开临时连接，随后使用崭新的“唯一生产身份”重新连接 AWS IoT Core，正式进入日常业务运营状态。
+
+## 核心概念组成
+
+  要玩转 Fleet Provisioning，主要涉及三个核心构件：
+  
+  Claim Certificate（认领证书）： 烧录在批量设备中的“通行证”，生命周期可控，通常权限受限。
+  
+  Provisioning Template（配置模板）： 一个 JSON 格式的蓝图，规定了设备接入后要在云端自动创建哪些 AWS 资源（Thing、Certificate、Policy）以及采用什么命名规则。 
+  
+  Pre-provisioning Hook（前置钩子 Lambda）： 决定设备能否入网的“安检门”，用于对接企业自身的 ERP、CRM 或设备白名单数据库进行安全校验。
+
+## 两种主流的 Fleet Provisioning 场景
+
+  1. Provisioning by Claim（认领配置 - 工业/无屏设备常用）：
+设备出厂自带通用的引导证书，上电自动联网注册。适合大批量、无交互界面的工业传感器、网关。
+
+2. Provisioning by Trusted User（信任用户/App 配置 - 消费级智能家居常用）：
+设备本身没有证书，用户买回家后，通过手机 App（如配网助手）扫描设备的二维码。手机 App 充当“受信任的代理”，在短时间内向 AWS 申请并为该设备注入唯一的身份证书。
+
+
+  
