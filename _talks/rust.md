@@ -28,7 +28,7 @@ toc_sticky: true # 目录是否固定在侧边 (可选)
 
 ## pub(crate) session: Arc<S>, 这里的 pub(crate) 详解
 
-## #[cfg(feature = "webrtc-helper")]
+## [cfg(feature = "webrtc-helper")]
 
 ## where 
 
@@ -36,5 +36,14 @@ pub fn build_router<S, B>(state: AppState<S, B>) -> Router
 where
     S: SessionSource + 'static,
     B: AgentBrain + 'static,
+
+## [tokio::main]
+
+
+async fn main() {
+
+
+## vscode debug 时，需要 gdb， 插件 CodeLLDB
+
 
 
