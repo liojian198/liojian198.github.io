@@ -316,4 +316,4 @@ UA-SCADA / UA over HTTPS / WebSockets / JSON：这是 OPC UA 走向云端的关�
 
 让边缘网关在局域网内通过 OPC UA 或 Modbus 聚合所有设备的数据，在边缘侧完成数据清洗、建模和缓存，然后通过安全的 MQTT 或 TLS 隧道将数据统一汇聚到云端。这比让成百上千个底层设备直接连云端要安全、稳定且省带宽得多。
 
-
+## modbus-tcp
